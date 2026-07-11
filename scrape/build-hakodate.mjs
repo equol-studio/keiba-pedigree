@@ -2,6 +2,7 @@
 // 使い方: node scrape/build-hakodate.mjs YYYYMMDD [maxRaces] [outPath]
 // 依存なし（Node 18+ の標準 fetch を使用）
 import { writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -137,7 +138,7 @@ async function scrapePandas(){
 async function main(){
   const date=process.argv[2];
   const maxRaces=process.argv[3]?+process.argv[3]:99;
-  const out=process.argv[4]||new URL('../pedigree-data.js',import.meta.url).pathname.replace(/^\//,'');
+  const out=process.argv[4]||fileURLToPath(new URL('../pedigree-data.js',import.meta.url));
   if(!date){ console.error('usage: node build-hakodate.mjs YYYYMMDD [maxRaces] [outPath]'); process.exit(1); }
   console.error('date',date);
   let ids=await raceIdsForDate(date);
@@ -173,7 +174,7 @@ async function main(){
   // 複勝回収率エビデンス（パンダズ函館2021-25）を自動生成
   try{
     const ev=await scrapePandas();
-    const evOut=new URL('../evidence-data.js',import.meta.url).pathname.replace(/^\//,'');
+    const evOut=fileURLToPath(new URL('../evidence-data.js',import.meta.url));
     writeFileSync(evOut, 'window.KEIBA_EV='+JSON.stringify(ev)+';\n', 'utf8');
     console.error('WROTE',evOut,'evidence',ev.length);
   }catch(e){ console.error('pandas evidence skip:', e.message); }

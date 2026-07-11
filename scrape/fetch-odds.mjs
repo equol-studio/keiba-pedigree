@@ -2,6 +2,7 @@
 // 使い方: node scrape/fetch-odds.mjs YYYYMMDD [outPath]
 // netkeibaオッズAPI(JSON)を使用。血統(pedigree-data.js)とは別に頻繁更新する想定。
 import { writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 const UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
@@ -33,7 +34,7 @@ async function fetchOdds(raceId){
 
 async function main(){
   const date=process.argv[2];
-  const out=process.argv[3]||new URL('../odds-data.js',import.meta.url).pathname.replace(/^\//,'');
+  const out=process.argv[3]||fileURLToPath(new URL('../odds-data.js',import.meta.url));
   if(!date){ console.error('usage: node fetch-odds.mjs YYYYMMDD [outPath]'); process.exit(1); }
   const ids=await raceIdsForDate(date);
   const races={};
