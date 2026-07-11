@@ -25,6 +25,12 @@
   h1 span{color:var(--accent)}
   .tag{font-size:11px;color:var(--sub);margin-top:2px}
   .wrap{max-width:960px;margin:0 auto;padding:16px}
+  /* タブ */
+  .tabs{display:flex;gap:6px;margin-bottom:14px;position:sticky;top:0;padding:8px 0;background:var(--bg);z-index:4}
+  .tab{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--sub);padding:11px 8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer}
+  .tab.active{background:var(--accent);color:#06263f;border-color:var(--accent)}
+  .panel{display:none}
+  .panel.active{display:block}
   .bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
   button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);
     padding:8px 12px;border-radius:8px;font-size:13px;cursor:pointer}
@@ -43,6 +49,7 @@
     font-size:11px;padding:2px 4px;outline:none;text-align:center;font-family:inherit}
   .ped input:focus{background:#0b1a2b}
   .g1 input{font-weight:700}
+  .ped td.sireline{background:rgba(108,192,255,.10);box-shadow:inset 3px 0 0 var(--accent)}
   .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
   .scroll-inner{min-width:640px;padding:2px}
   /* results */
@@ -59,6 +66,16 @@
   .lt-mare{background:rgba(244,114,182,.16);color:var(--hot)}
   .lt-bms{background:rgba(255,209,102,.16);color:var(--accent2)}
   .lval{color:var(--txt);line-height:1.5}
+  /* サイアーライン系統評価 */
+  .sireeval{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .sireeval .sysname{font-size:11px;font-weight:700;color:var(--accent);background:rgba(108,192,255,.14);padding:2px 8px;border-radius:99px}
+  .sireeval .ev-txt{color:var(--sub);font-size:12px;flex-basis:100%;margin-left:2px}
+  /* 母スポットライト */
+  .dam-spot{margin:10px 0;padding:10px 12px;border-radius:10px;background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.3)}
+  .dam-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:15px}
+  .dam-sub{font-size:12px;color:var(--sub);margin-left:auto}
+  .dam-memo{margin-top:7px;font-size:12.5px;line-height:1.55;color:var(--txt)}
+  .dam-memo.muted{color:var(--sub)}
   /* 系統・ニックス */
   .sys{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px}
   .syschip{font-size:12px;padding:5px 10px;border-radius:8px;background:var(--panel2);border:1px solid var(--line)}
@@ -66,6 +83,75 @@
   .nick{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--accent2);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.6}
   .nick .k{color:var(--accent2);font-weight:700}
   .nick .seed{font-size:10px;color:var(--sub);background:rgba(255,255,255,.05);padding:1px 6px;border-radius:99px;margin-left:6px}
+  h2 .seed{font-size:10px;color:var(--sub);background:rgba(255,255,255,.05);padding:1px 6px;border-radius:99px;margin-left:6px;font-weight:400}
+  /* コース・距離適性 */
+  .apt{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-bottom:8px}
+  .apt-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:14px}
+  .apt-role{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(108,192,255,.16);color:var(--accent)}
+  .apt-lv{font-size:10px;color:var(--sub);margin-left:auto}
+  .apt-g{display:flex;flex-wrap:wrap;gap:6px}
+  .apt-g span{font-size:12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--txt)}
+  .apt-none{color:var(--sub);font-size:12px;display:flex;gap:8px;align-items:center}
+  .apt-none b{color:var(--txt)}
+  .apt-ev{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+  .apt-ev .evchip{font-size:11px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);color:var(--good);border-radius:6px;padding:3px 8px}
+  /* エビデンス表 */
+  .evtable{width:100%;border-collapse:collapse;font-size:12px}
+  .evtable th{font-size:10px;color:var(--sub);font-weight:600;text-align:left;padding:4px 4px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .evtable td{padding:2px;border-bottom:1px solid var(--line)}
+  .evtable input{width:100%;background:transparent;border:1px solid transparent;border-radius:5px;color:var(--txt);
+    font-size:12px;padding:5px 6px;font-family:inherit;outline:none}
+  .evtable input:focus{background:var(--bg);border-color:var(--accent)}
+  .evtable .del{background:transparent;border:0;color:var(--hot);cursor:pointer;font-size:15px;padding:2px 6px}
+  .evtable tr.ev-auto td{color:var(--sub);background:rgba(255,255,255,.02)}
+  .evtable tr.ev-auto td.c-sire,.evtable tr.ev-auto td.c-num{color:var(--txt)}
+  #evFilter,#evSearch{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit}
+  #evSearch{outline:none} #evSearch:focus{border-color:var(--accent)}
+  .evtable .c-sire{width:22%} .evtable .c-course{width:20%} .evtable .c-period{width:14%}
+  .evtable .c-num{width:9%} .evtable .c-src{width:16%} .evtable .c-del{width:6%}
+  /* レース血統ビュー */
+  #raceSel,#raceSortMode{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit}
+  .rvtable .myaku{font-size:11px;font-weight:700;color:#c084fc;margin-top:2px;white-space:nowrap}
+  .rvtable .odds{font-size:12px;font-weight:700;color:var(--txt);margin-top:2px;white-space:nowrap}
+  .val-hot{font-size:10px;font-weight:700;color:#06263f;background:var(--accent2);padding:1px 6px;border-radius:99px}
+  .rvtable{width:100%;border-collapse:collapse;font-size:13px}
+  .rvtable th{font-size:10px;color:var(--sub);text-align:left;padding:6px 7px;border-bottom:1px solid var(--line);white-space:nowrap}
+  .rvtable td{padding:9px 7px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .rvtable tr.main{cursor:pointer}
+  .rvtable tr.main:hover{background:rgba(255,255,255,.03)}
+  .rvtable .uma{font-weight:700;text-align:center;width:34px;font-variant-numeric:tabular-nums}
+  .rvtable .hn{font-weight:700;white-space:nowrap;font-size:14px}
+  .rvtable .sub{color:var(--sub);font-size:11px;margin-top:2px}
+  .rvtable .roi{white-space:nowrap;text-align:right}
+  .rvtable .roi b{font-size:15px;font-variant-numeric:tabular-nums}
+  .rvtable .roi .u{color:var(--sub);font-size:11px}
+  .rvtable .mk{font-size:20px;text-align:center;width:38px;font-weight:700}
+  .rvtable .load{background:var(--panel2);border:1px solid var(--line);color:var(--accent);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:11px;white-space:nowrap}
+  .rv-buy{background:rgba(74,222,128,.09)}
+  /* 亀谷式 国系統カラーリング */
+  .nbadge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;white-space:nowrap}
+  .n-jp{background:rgba(74,222,128,.16);color:var(--good)}
+  .n-us{background:rgba(251,113,133,.16);color:var(--hot)}
+  .n-eu{background:rgba(108,192,255,.16);color:var(--accent)}
+  .rote-hot{font-size:10px;font-weight:700;color:var(--accent2);background:rgba(255,209,102,.14);padding:1px 6px;border-radius:99px}
+  .bias-hot{font-size:10px;font-weight:700;color:var(--good);background:rgba(74,222,128,.14);padding:1px 6px;border-radius:99px}
+  .pace{font-size:12px;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-bottom:10px}
+  .roi-hi{color:var(--good)} .roi-mid{color:var(--accent2)} .roi-lo{color:var(--sub)}
+  .m-blue{color:var(--accent)} .m-star{color:#c084fc}
+  .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--sub);margin-bottom:10px}
+  .legend b{font-size:14px;margin-right:2px}
+  /* 父系ライン展開 */
+  .rv-detail td{background:var(--panel);border-bottom:2px solid var(--line);padding:10px 12px}
+  .rv-detail .dl-row{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;margin-bottom:5px}
+  .rv-detail .dl-k{color:var(--sub);min-width:66px}
+  .rv-detail .chain{color:var(--txt)}
+  /* 凝縮グループ表示 */
+  .rv-detail .dg-head{font-size:13px;font-weight:700;padding:4px 0 8px;border-bottom:1px solid var(--line);margin-bottom:8px;line-height:1.5}
+  .rv-detail .dg{display:flex;gap:8px;font-size:12px;line-height:1.6;padding:3px 0}
+  .rv-detail .dg-k{color:var(--sub);flex:0 0 58px;font-weight:700}
+  .rv-detail .dg-v{color:var(--txt);flex:1;min-width:0}
+  .rv-detail .dg-v b{color:var(--txt)}
+  .rv-detail .evchip{font-size:11px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);color:var(--good);border-radius:6px;padding:2px 7px}
   /* リサーチメモ board */
   .board{display:flex;flex-direction:column;gap:10px}
   .board label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--sub)}
@@ -97,36 +183,75 @@
 </header>
 
 <div class="wrap">
-  <div class="bar">
-    <button class="primary" id="btnSample">サンプル読込</button>
-    <button id="btnPaste">一括貼り付け</button>
-    <button id="btnClear">クリア</button>
-    <button id="btnGen4">4代表示</button>
-    <button id="btnGen5">5代表示</button>
-    <span class="saved" id="savedTag">自動保存</span>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="race">🏇 レース</button>
+    <button class="tab" data-tab="ped">🧬 血統表</button>
+    <button class="tab" data-tab="data">📚 データ</button>
   </div>
 
-  <div class="pastebox" id="pastebox" hidden>
-    <p class="muted" style="margin:0 0 6px">血統表を上から順（父→父の父→…の行順）にコピペ、または1行1頭で貼り付け→「反映」。当ツールの血統表を選択コピーした順にそのまま対応します。</p>
-    <textarea id="pasteArea" placeholder="サンデーサイレンス&#10;ノーザンダンサー&#10;…（改行 / タブ / カンマ区切り）"></textarea>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="primary" id="btnPasteApply">反映</button>
-      <button id="btnPasteCancel">閉じる</button>
+  <!-- ===== レース ===== -->
+  <section class="panel active" data-panel="race">
+    <div class="card" id="raceCard" hidden>
+      <h2>🏇 レース血統ビュー<span class="seed" id="raceMeta"></span></h2>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+        <select id="raceSel"></select>
+        <select id="raceSortMode">
+          <option value="buy">買える血統順（回収データ）</option>
+          <option value="myaku">妙味順（亀谷シグナル）</option>
+          <option value="uma">馬番順</option>
+        </select>
+      </div>
+      <div class="legend">
+        <span><b class="roi-hi">◎</b>複勝≥100</span><span><b class="roi-mid">○</b>≥88</span><span><b class="m-blue">▲</b>≥80</span><span><b class="roi-lo">△</b>実証&lt;80</span><span><b class="m-star">☆</b>父系がコースにドンピシャ(データ無)</span><span><b class="roi-lo">・</b>対応域</span><span><b class="roi-lo">－</b>不適</span>
+      </div>
+      <div class="pace" id="racePace"></div>
+      <div class="scroll"><div class="scroll-inner" style="min-width:560px"><table class="rvtable" id="raceView"></table></div></div>
+      <p class="muted" style="margin:8px 0 0">◎○△▲＝このコースの<b>複勝回収率</b>エビデンス一致。行タップで父系ラインを展開、「読込」で5代クロス診断へ。データ更新は <code>scrape/build-hakodate.mjs</code>。</p>
     </div>
-  </div>
+    <p class="muted" id="raceEmpty" style="text-align:center;padding:24px" hidden>レースデータ未取得です。<code>node scrape/build-hakodate.mjs YYYYMMDD</code> を実行すると函館全レースがここに並びます。</p>
+  </section>
 
-  <p class="hint">馬名を各マスに入力すると自動でクロスを検出します。同じ祖先が複数回出ると色付き＋世代表記（例 3×4）で表示。空欄は無視されます。入力は自動保存され、次回も復元されます。</p>
-  <datalist id="sires"></datalist>
+  <!-- ===== 血統表 ===== -->
+  <section class="panel" data-panel="ped">
+    <div class="bar">
+      <button class="primary" id="btnSample">サンプル読込</button>
+      <button id="btnPaste">一括貼り付け</button>
+      <button id="btnClear">クリア</button>
+      <button id="btnGen4">4代表示</button>
+      <button id="btnGen5">5代表示</button>
+      <span class="saved" id="savedTag">自動保存</span>
+    </div>
+    <div class="pastebox" id="pastebox" hidden>
+      <p class="muted" style="margin:0 0 6px">血統表を上から順（父→父の父→…の行順）にコピペ、または1行1頭で貼り付け→「反映」。当ツールの血統表を選択コピーした順にそのまま対応します。</p>
+      <textarea id="pasteArea" placeholder="サンデーサイレンス&#10;ノーザンダンサー&#10;…（改行 / タブ / カンマ区切り）"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="primary" id="btnPasteApply">反映</button>
+        <button id="btnPasteCancel">閉じる</button>
+      </div>
+    </div>
+    <p class="hint">馬名を各マスに入力すると自動でクロスを検出します。同じ祖先が複数回出ると色付き＋世代表記（例 3×4）で表示。入力は自動保存され、次回も復元されます。</p>
+    <div class="scroll"><div class="scroll-inner">
+      <table class="ped" id="ped"></table>
+    </div></div>
+    <div class="card" id="result">
+      <div class="empty">馬名を入力するか、レースタブで「読込」すると診断結果が出ます。</div>
+    </div>
+  </section>
 
-  <div class="scroll"><div class="scroll-inner">
-    <table class="ped" id="ped"></table>
-  </div></div>
-
-  <div class="card" id="result">
-    <div class="empty">馬名を入力すると診断結果が出ます。「サンプル読込」で例を確認できます。</div>
-  </div>
-
-  <div class="card" id="noteCard">
+  <!-- ===== データ ===== -->
+  <section class="panel" data-panel="data">
+    <div class="card" id="evCard">
+      <h2>📚 コース別 回収率エビデンス<span class="saved" id="evSaved">保存</span></h2>
+      <p class="muted" style="margin:0 0 10px"><b>🔒＝自動取得データ（パンダズ競馬 函館 2021-25／全種牡馬×コースの複勝回収率）</b>。父／母父が一致すると🎯適性・レース評価に自動反映。<b>単勝はブレるので複勝を優先</b>。自分の裏取りは「＋行を追加」で足せます（自動データは更新時に再取得）。</p>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <select id="evFilter"></select>
+        <input id="evSearch" placeholder="種牡馬名で検索" autocomplete="off">
+        <span class="muted" id="evCount"></span>
+      </div>
+      <div class="scroll"><div class="scroll-inner" style="min-width:560px"><table class="evtable" id="evTable"></table></div></div>
+      <div style="margin-top:8px;display:flex;gap:8px"><button id="btnEvAdd">＋ 行を追加</button><button id="btnEvReset">追加分をクリア</button></div>
+    </div>
+    <div class="card" id="noteCard">
     <h2>🗒 血統リサーチメモ<span class="saved" id="noteSaved">保存</span></h2>
     <p class="muted" style="margin:0 0 10px">netkeibaで裏取りした自分の知見をここに蓄積。入力は自動保存されます（血統表とは別枠）。</p>
     <div class="board">
@@ -139,11 +264,17 @@
       <label>牝系の傾向（距離・馬場・成長・気性）
         <input id="nMareTrend" placeholder="例：中長距離◎ 底力型 やや晩成">
       </label>
+      <label>👩 母の産駒成績・半きょうだい（この馬の母から出た活躍馬）— 上の母スポットライトに表示
+        <input id="nDamProduce" placeholder="例：全兄○○(重賞2勝/芝2000◎)、母は現役3勝・芝マイル型">
+      </label>
       <label>父×母父ニックスの実績メモ（netkeibaで確認した数字など）
         <textarea id="nNicks" placeholder="例：父サンデー系×母父キンカメ系＝[単勝回収/複勝率]…（自分で裏取りした実データを記録）"></textarea>
       </label>
     </div>
   </div>
+  </section>
+
+  <datalist id="sires"></datalist>
 </div>
 
 <footer>
@@ -152,6 +283,9 @@
   JRA非公式・投資助言ではありません。予想の一材料としてご利用ください。
 </footer>
 
+<script src="pedigree-data.js" onerror="window.__noPed=1"></script>
+<script src="evidence-data.js" onerror="window.__noEv=1"></script>
+<script src="odds-data.js" onerror="window.__noOdds=1"></script>
 <script>
 /* ---- 5代血統表: heapインデックス方式 ----
    pos2=父(gen1) pos3=母(gen1)、pos4..7=gen2 ... pos32..63=gen5
@@ -176,6 +310,7 @@ function buildTable(){
         const td=document.createElement('td');
         td.rowSpan = block;
         td.className = 'g'+g;
+        if([2,4,8,16,32].includes(heap)) td.classList.add('sireline');   // 父系ライン
         const inp=document.createElement('input');
         inp.dataset.heap = heap;
         inp.value = vals[heap] || '';
@@ -232,10 +367,36 @@ const SYSTEM_MAP={
   // ネイティヴダンサー系
   ネイティヴダンサー:'native'
 };
+/* 収録拡充（高信頼のサイアーライン分類） */
+Object.assign(SYSTEM_MAP,{
+  ジャスタウェイ:'sunday',リアルインパクト:'sunday',キンシャサノキセキ:'sunday',ヴィクトワールピサ:'sunday',
+  ゴールドアリュール:'sunday',サトノダイヤモンド:'sunday',ワールドプレミア:'sunday',シルバーステート:'sunday',
+  スクリーンヒーロー:'roberto',
+  ヘニーヒューズ:'nd',ドレフォン:'nd',サトノクラウン:'nd',シニスターミニスター:'nd',
+  ホッコータルマエ:'kinkame',サートゥルナーリア:'kinkame',エイシンフラッシュ:'kinkame',ベルシャザール:'kinkame',
+  // よく母父に入る血（ライン遡及で拾えないもの）
+  サクラバクシンオー:'nasrullah',キングヘイロー:'nd',アドマイヤムーン:'mrp',エンドスウィープ:'mrp',
+  スウェプトオーヴァーボード:'mrp',アグネスデジタル:'mrp',タイキシャトル:'sunday',ゼンノロブロイ:'sunday',
+  ヴィクトワールピサ:'sunday',ハーツクライ:'sunday',
+  // 外国産・新種牡馬（函館データで「系統?」だったもの）
+  マテラスカイ:'mrp',ニューイヤーズデイ:'mrp',PioneeroftheNile:'mrp',アイルハヴアナザー:'mrp',
+  Frosted:'nasrullah',マジェスティックウォリアー:'nasrullah',モズアスコット:'nd',
+  Mehmas:'nd',Anjaal:'nd',フィレンツェファイア:'nasrullah'
+});
 let sysOverrides={};   // ユーザー追加分（localStorage）
 function sysOf(name){
   const n=norm(name); if(!n) return null;
   return sysOverrides[n] || SYSTEM_MAP[n] || null;
+}
+/* 父系ライン(父→父父→父父父)で系統を判定：直父が未登録でも遡って分類 */
+function sysOfLine(ped){
+  if(!ped) return null;
+  for(const h of [2,4,8,16]){ const s=sysOf(ped[h]); if(s) return s; }
+  return null;
+}
+function sireChain(ped){
+  if(!ped) return [];
+  return [2,4,8].map(h=>ped[h]).filter(Boolean);
 }
 /* ニックス（父系×母父系）の“定説ベース”傾向。数値は入れない・編集は下のメモで。 */
 const NICKS={
@@ -254,6 +415,231 @@ const NICKS={
 function nickOf(fsys,bsys){
   if(!fsys||!bsys) return null;
   return NICKS[fsys+'|'+bsys] || NICKS[bsys+'|'+fsys] || null;
+}
+
+/* ---- コース・距離適性（定説ベースの一般傾向。数値は入れない／実数字はメモへ） ---- */
+/* 種牡馬レベル（高信頼の主要馬） */
+const APT={
+  'ディープインパクト':{dist:'芝1600–2400m',best:'東京・京都の直線が長い広いコース',going:'軽い良馬場◎',surf:'芝◎／ダート△',type:'瞬発力・切れ味（やや早熟）'},
+  'キズナ':{dist:'芝1800–2400m',best:'コースを選ばず器用',going:'良〜道悪までこなす',surf:'芝◎（ダート産駒も）',type:'パワー×切れ・成長型'},
+  'ハーツクライ':{dist:'芝2000–2500m',best:'底力の要る中長距離',going:'良〜稍重',surf:'芝',type:'スタミナ・晩成・差し'},
+  'ステイゴールド':{dist:'芝2200–3200m',best:'中山・洋芝・タフな消耗戦',going:'道悪◎',surf:'芝',type:'スタミナ・勝負根性・気性'},
+  'オルフェーヴル':{dist:'芝2000–3000m',best:'タフな中長距離',going:'道悪◎',surf:'芝',type:'スタミナ・パワー・気性強'},
+  'ゴールドシップ':{dist:'芝2200–3200m',best:'洋芝・タフなコース',going:'道悪◎',surf:'芝',type:'スタミナ・一発・気性'},
+  'ダイワメジャー':{dist:'芝1400–1800m（マイル）',best:'先行有利のコース',going:'良〜パワー馬場',surf:'芝（ダートも）',type:'先行・パワー・仕上り早い'},
+  'ロードカナロア':{dist:'芝1200–1600m（短〜マイル）',best:'スピードの活きるコース',going:'良馬場',surf:'芝ダート兼用',type:'スピード・パワー'},
+  'キングカメハメハ':{dist:'芝ダート1800–2400m（中距離万能）',best:'コース不問・器用',going:'不問〜パワー馬場も可',surf:'芝ダート兼用',type:'パワー×スピード'},
+  'ルーラーシップ':{dist:'芝2000–2500m',best:'中距離',going:'良〜稍重',surf:'芝',type:'パワー・成長型（やや不器用）'},
+  'ドゥラメンテ':{dist:'芝2000–2400m',best:'東京の中距離',going:'良馬場',surf:'芝',type:'切れ×パワー'},
+  'キタサンブラック':{dist:'芝2000–3000m',best:'スタミナの要る消耗戦',going:'良〜道悪',surf:'芝',type:'スタミナ・成長型'},
+  'モーリス':{dist:'芝1600–2000m',best:'タフなマイル〜中距離',going:'良〜パワー馬場',surf:'芝（ダート産駒も）',type:'パワー・先行'},
+  'エピファネイア':{dist:'芝1800–2400m',best:'中距離',going:'良〜稍重',surf:'芝',type:'パワー×スピード（気性注意）'},
+  'クロフネ':{dist:'ダート全般（芝マイルも）',best:'パワーの要るコース',going:'ダート◎・パワー馬場',surf:'ダート主体',type:'パワー・スピード'},
+  'ハービンジャー':{dist:'芝2000–2400m',best:'洋芝・時計のかかる馬場',going:'道悪◎',surf:'芝',type:'スタミナ・馬力'},
+  'フジキセキ':{dist:'芝1400–1600m（マイル）',best:'先行有利',going:'良馬場',surf:'芝ダート',type:'仕上り早い・スピード'},
+  'スペシャルウィーク':{dist:'芝2000–2400m',best:'東京の中長距離',going:'良馬場',surf:'芝',type:'スタミナ・切れ'},
+  'エフフォーリア':{dist:'芝2000–2400m',best:'中距離',going:'良馬場',surf:'芝',type:'切れ・スピード'},
+  'エイシンフラッシュ':{dist:'芝1200–2000m',best:'洋芝・函館・小回り◎',going:'良〜道悪もこなす',surf:'芝',type:'パワー・欧州型・叩き良化'},
+  'ブラックタイド':{dist:'芝1800–2400m',best:'中長距離',going:'良〜稍重',surf:'芝（ダートも）',type:'スタミナ・成長型'},
+  'ドレフォン':{dist:'ダート1200–1800m（芝短距離も）',best:'ダートのスピード勝負',going:'ダート◎・パワー馬場',surf:'ダート主体',type:'スピード・パワー'},
+  'ヘニーヒューズ':{dist:'ダート1200–1800m',best:'ダート短〜中距離',going:'ダート◎',surf:'ダート主体',type:'パワー・スピード・仕上り早い'},
+  'ジャスタウェイ':{dist:'芝1600–2000m',best:'東京の広いコース',going:'良馬場',surf:'芝',type:'切れ・スピード'},
+  'ゴールドアリュール':{dist:'ダート1600–2000m',best:'ダート中距離の王道',going:'ダート◎',surf:'ダート',type:'パワー・スタミナ'},
+  'サートゥルナーリア':{dist:'芝1800–2200m',best:'中距離',going:'良馬場',surf:'芝',type:'スピード・切れ'},
+  'ホッコータルマエ':{dist:'ダート1800–2100m',best:'ダート中距離',going:'ダート◎',surf:'ダート',type:'パワー・スタミナ・先行'}
+};
+/* 系統レベルのフォールバック */
+const APT_SYS={
+  sunday:{dist:'芝マイル〜中距離',best:'瞬発力の活きる広いコース',going:'軽い良馬場向き',surf:'芝主体',type:'切れ味・スピード'},
+  kinkame:{dist:'中距離万能',best:'コースを選ばず器用',going:'不問（パワー馬場も可）',surf:'芝ダート兼用',type:'パワー×スピード'},
+  mrp:{dist:'マイル〜中距離',best:'パワーの要るコース',going:'パワー馬場・ダート○',surf:'芝ダート兼用',type:'パワー・先行'},
+  roberto:{dist:'中距離',best:'タフな消耗戦',going:'道悪・荒れ馬場◎',surf:'芝',type:'パワー・勝負根性'},
+  nd:{dist:'中長距離',best:'洋芝・欧州型コース',going:'道悪・時計かかる馬場◎',surf:'芝',type:'スタミナ・馬力'},
+  nasrullah:{dist:'マイル〜中距離',best:'先行有利の平坦',going:'良馬場',surf:'芝',type:'スピード・気性強'},
+  native:{dist:'短距離〜マイル',best:'スピードコース',going:'良〜パワー馬場',surf:'芝ダート',type:'スピード・パワー'}
+};
+function aptOf(name){
+  const n=norm(name); if(!n) return null;
+  if(APT[n]) return Object.assign({level:'種牡馬'}, APT[n]);
+  const s=sysOf(name);
+  if(s&&APT_SYS[s]) return Object.assign({level:'系統('+SYS_LABEL[s]+')'}, APT_SYS[s]);
+  return null;
+}
+
+/* 系統ごとの評価（サイアーライン評価用） */
+const SYS_EVAL={
+  sunday:'瞬発力・切れ味。日本の主流。軽い芝・上がり勝負に強い',
+  kinkame:'パワー×スピードの万能型。芝ダ・距離を選ばず自在',
+  mrp:'パワーと先行力。ダート・パワー馬場で本領',
+  roberto:'勝負根性とパワー。タフな馬場・消耗戦に強い',
+  nd:'スタミナと馬力。洋芝・道悪・中長距離向き',
+  nasrullah:'スピードと気性の強さ。マイル前後の先行力',
+  native:'スピード＋パワー。短距離・ダートの快速'
+};
+/* 函館(洋芝・小回り)巧者タグ＝得意競馬場 */
+const HAKODATE_VENUE={
+  ハービンジャー:'洋芝◎・函館巧者',エイシンフラッシュ:'洋芝・小回り◎',モーリス:'函館芝◎',
+  キズナ:'函館◎(芝ダ)',ゴールドシップ:'洋芝・タフ◎',オルフェーヴル:'洋芝・道悪◎',
+  ステイゴールド:'洋芝・タフ◎',ロードカナロア:'函館芝短◎',ブラックタイド:'函館ダ◎',
+  ドレフォン:'函館ダ◎',ハーツクライ:'洋芝○',ルーラーシップ:'洋芝○'
+};
+function venueNote(sire,fApt,v){
+  const known=HAKODATE_VENUE[sire]||HAKODATE_VENUE[norm(sire)];
+  const hakoEv=evidence.filter(r=>norm(r.sire)===norm(sire)&&/函館/.test(r.course)&&r.fuku);
+  const parts=[];
+  if(known) parts.push('🏔'+known+'(定説)');
+  if(hakoEv.length){ const best=Math.max(...hakoEv.map(r=>+r.fuku||0)); parts.push(`函館実績: 複勝回収 最高${best}%（${hakoEv.length}コース）`); }
+  return parts.join(' ／ ')||'函館の特記データなし';
+}
+
+/* ---- 亀谷式 国系統（日本型/米国型/欧州型） ---- */
+/* 米=スピード/ダート/速いペース/短距離 欧=スタミナ/道悪/洋芝/長距離 日=瞬発力/中距離/平均ペース */
+const NATION_LABEL={'日':'日本型','米':'米国型','欧':'欧州型'};
+const NATION_CLS={'日':'n-jp','米':'n-us','欧':'n-eu'};
+const NATION_SYS={ mrp:'米', native:'米', nasrullah:'米', nd:'欧', roberto:'欧', sunday:'日', kinkame:'日' };
+const NATION_SIRE={
+  // 米国型（ダート・スピード）
+  クロフネ:'米',ヘニーヒューズ:'米',ドレフォン:'米',ゴールドアリュール:'米',シニスターミニスター:'米',
+  ホッコータルマエ:'米',パイロ:'米',マジェスティックウォリアー:'米',シニスター:'米',
+  マテラスカイ:'米',ニューイヤーズデイ:'米',PioneeroftheNile:'米',アイルハヴアナザー:'米',
+  Frosted:'米',モズアスコット:'米',フィレンツェファイア:'米',サウスヴィグラス:'米',
+  Monsun:'欧',Mehmas:'欧',Anjaal:'欧',
+  // 欧州型（スタミナ・道悪・洋芝）
+  ステイゴールド:'欧',オルフェーヴル:'欧',ゴールドシップ:'欧',ドリームジャーニー:'欧',ハーツクライ:'欧',
+  ハービンジャー:'欧',モーリス:'欧',エピファネイア:'欧',スクリーンヒーロー:'欧',ルーラーシップ:'欧',
+  サトノクラウン:'欧',キングヘイロー:'欧',
+  // 日本型（瞬発・中距離）
+  ディープインパクト:'日',キズナ:'日',ダイワメジャー:'日',ロードカナロア:'日',キタサンブラック:'日',
+  ドゥラメンテ:'日',エフフォーリア:'日',サートゥルナーリア:'日',キングカメハメハ:'日',フジキセキ:'日',
+  ジャスタウェイ:'日',スペシャルウィーク:'日',ブラックタイド:'日'
+};
+/* 亀谷式 小系統（サンデー系の細分：T=スタミナ/P=スピード/D=ダート/L=ローカル/ディープ系） */
+const SUBSYS_LABEL={
+  // サンデー系
+  deep:'ディープ系', tsun:'Tサンデー系(スタミナ)', psun:'Pサンデー系(スピード)', dsun:'Dサンデー系(ダート)', lsun:'Lサンデー系(ローカル)',
+  // ノーザンダンサー系
+  nd_danzig:'ダンチヒ系', nd_sadler:'サドラーズウェルズ系', nd_storm:'ストームキャット系',
+  nd_vice:'ヴァイスリージェント系', nd_lyphard:'リファール系', nd_nijinsky:'ニジンスキー系', nd_nureyev:'ヌレイエフ系',
+  // ロベルト系
+  rob_grass:'グラスワンダー系', rob_brian:'ブライアンズタイム系', rob_kriss:'クリスエス系',
+  // ミスプロ系
+  mrp_gone:'ゴーンウェスト系', mrp_49:'フォーティナイナー系',
+  // ナスルーラ系
+  nas_grey:'グレイソヴリン系', nas_bold:'ボールドルーラー系', nas_princely:'プリンスリーギフト系'
+};
+const SUBSYS_SIRE={
+  // ── サンデー系 ──
+  ディープインパクト:'deep',キズナ:'deep',サトノダイヤモンド:'deep',リアルインパクト:'deep',
+  ハーツクライ:'tsun',ステイゴールド:'tsun',オルフェーヴル:'tsun',ゴールドシップ:'tsun',
+  ドリームジャーニー:'tsun',マンハッタンカフェ:'tsun',キタサンブラック:'tsun',ブラックタイド:'tsun',
+  フジキセキ:'psun',アグネスタキオン:'psun',キンシャサノキセキ:'psun',ダイワメジャー:'psun',
+  ジャスタウェイ:'psun',スペシャルウィーク:'psun',
+  ゴールドアリュール:'dsun',
+  ネオユニヴァース:'lsun',ヴィクトワールピサ:'lsun',
+  // ── ノーザンダンサー系 ──
+  ハービンジャー:'nd_danzig',ダンチヒ:'nd_danzig',
+  サドラーズウェルズ:'nd_sadler',モズアスコット:'nd_sadler',サトノクラウン:'nd_sadler',
+  ドレフォン:'nd_storm',ヘニーヒューズ:'nd_storm',
+  クロフネ:'nd_vice',ヴァイスリージェント:'nd_vice',ヴァイスリーガル:'nd_vice',
+  リファール:'nd_lyphard',ニジンスキー:'nd_nijinsky',ヌレイエフ:'nd_nureyev',
+  // ── ロベルト系 ──
+  モーリス:'rob_grass',スクリーンヒーロー:'rob_grass',グラスワンダー:'rob_grass',
+  ブライアンズタイム:'rob_brian',シンボリクリスエス:'rob_kriss',エピファネイア:'rob_kriss',エフフォーリア:'rob_kriss',
+  // ── ミスプロ系 ──
+  マテラスカイ:'mrp_gone',スウェプトオーヴァーボード:'mrp_gone',
+  // ── ナスルーラ系 ──
+  トニービン:'nas_grey',グレイソヴリン:'nas_grey',ボールドルーラー:'nas_bold',セクレタリアト:'nas_bold',
+  Frosted:'nas_bold',マジェスティックウォリアー:'nas_bold',サクラバクシンオー:'nas_princely'
+};
+function subSysOf(sire,fsys){
+  return SUBSYS_SIRE[sire]||SUBSYS_SIRE[norm(sire)]||null;
+}
+function nationOf(sire,fsys){
+  const n=NATION_SIRE[sire]||NATION_SIRE[norm(sire)];
+  if(n) return n;
+  const sub=subSysOf(sire,fsys);           // 小系統で国系統を補完
+  if(sub==='dsun'||sub==='nd_storm'||sub==='nd_vice') return '米';
+  if(sub==='tsun'||sub==='nd_sadler'||sub==='nd_danzig') return '欧';
+  if(sub==='psun'||sub==='deep'||sub==='lsun') return '日';
+  return NATION_SYS[fsys]||null;
+}
+function natBadge(n){ return n?`<span class="nbadge ${NATION_CLS[n]}">${NATION_LABEL[n]}</span>`:'<span class="sub">系統?</span>'; }
+/* 父×母父の国系統バランス（亀谷式・配合の方向性） */
+function nationCombo(f,b){
+  if(!f||!b) return '';
+  if(f===b){ const t={日:'瞬発力に純化（中距離・上がり勝負）',米:'スピード/ダートに純化（短縮・パワー馬場）',欧:'スタミナ/パワーに純化（延長・道悪/洋芝）'}; return `${NATION_LABEL[f]}×${NATION_LABEL[b]}＝${t[f]}`; }
+  const map={
+    '日米':'瞬発力＋スピード/ダート補強（短縮やパワー馬場も対応）',
+    '米日':'スピードに切れを付与（日本の主流的バランス）',
+    '日欧':'瞬発力＋スタミナ（延長・タフな流れに幅）',
+    '欧日':'スタミナに日本的スピードを補給',
+    '米欧':'スピード×スタミナのバランス型（万能）',
+    '欧米':'パワー×スピード（タフな中距離・ダート向き）'
+  };
+  return `${NATION_LABEL[f]}×${NATION_LABEL[b]}＝${map[f+b]||'異系ミックス'}`;
+}
+
+/* ---- コース別 回収率エビデンス（実データを蓄積するミニDB） ---- */
+/* seed: パンダズ競馬 函館 2021-25（複勝込みの一貫データ）。単勝はブレるので複勝回収率を主軸に。
+   TurfEdge(20-24)の単勝は参考メモ欄に：ブラックタイドダ1700=単369、モーリス芝1800=単296、エイシンフラッシュ芝1200=単302 等（少頭数でブレ大） */
+const EVIDENCE_SEED=[
+  {sire:'モーリス',course:'函館芝1200',period:'21-25',n:'',fuku:'73',tan:'112',src:'パンダズ'},
+  {sire:'ロードカナロア',course:'函館芝1200',period:'21-25',n:'',fuku:'88',tan:'87',src:'パンダズ'},
+  {sire:'キズナ',course:'函館芝1800',period:'21-25',n:'',fuku:'86',tan:'113',src:'パンダズ(複勝率39.6%)'},
+  {sire:'ハービンジャー',course:'函館芝1800',period:'21-25',n:'',fuku:'80',tan:'116',src:'パンダズ'},
+  {sire:'モーリス',course:'函館芝1800',period:'21-25',n:'',fuku:'71',tan:'91',src:'パンダズ'},
+  {sire:'ハービンジャー',course:'函館芝2000',period:'21-25',n:'',fuku:'99',tan:'131',src:'パンダズ(複勝率27%)'},
+  {sire:'キズナ',course:'函館芝2000',period:'21-25',n:'',fuku:'82',tan:'118',src:'パンダズ'},
+  {sire:'キズナ',course:'函館ダ1700',period:'21-25',n:'',fuku:'85',tan:'111',src:'パンダズ'},
+  {sire:'ドレフォン',course:'函館ダ1700',period:'21-25',n:'',fuku:'97',tan:'102',src:'パンダズ'},
+  {sire:'ドゥラメンテ',course:'函館ダ1700',period:'21-25',n:'',fuku:'87',tan:'111',src:'パンダズ'},
+  {sire:'ブラックタイド',course:'函館ダ1700',period:'21-25',n:'',fuku:'108',tan:'203',src:'パンダズ(単勝はTurfEdge369=ブレ)'}
+];
+/* 自動データ(evidence-data.js=パンダズ函館2021-25) ＋ ユーザー追加(userEv) */
+const AUTO_EV=(window.KEIBA_EV&&window.KEIBA_EV.length?window.KEIBA_EV:EVIDENCE_SEED).map(r=>Object.assign({auto:true},r));
+let userEv=[];
+let evidence=AUTO_EV.slice();
+function rebuildEvidence(){ evidence=AUTO_EV.concat(userEv); }
+const EV_COLS=[['sire','種牡馬','c-sire'],['course','コース','c-course'],['period','期間','c-period'],
+  ['n','N','c-num'],['fuku','複勝回収%','c-num'],['tan','単勝回収%','c-num'],['src','出典','c-src']];
+function fillEvFilter(){
+  const sel=document.getElementById('evFilter'); if(!sel||sel.dataset.filled) return;
+  const courses=[...new Set(AUTO_EV.map(r=>r.course).filter(Boolean))];
+  sel.innerHTML='<option value="">全コース</option>'+courses.map(c=>`<option value="${c}">${c}</option>`).join('');
+  sel.dataset.filled='1'; sel.onchange=renderEv;
+  const s=document.getElementById('evSearch'); if(s) s.addEventListener('input',renderEv);
+}
+function renderEv(){
+  const t=document.getElementById('evTable'); if(!t) return;
+  const fc=(document.getElementById('evFilter')||{}).value||'';
+  const q=norm((document.getElementById('evSearch')||{}).value||'');
+  let shown=0;
+  let h='<tr>'+EV_COLS.map(c=>`<th class="${c[2]}">${c[1]}</th>`).join('')+'<th class="c-del"></th></tr>';
+  evidence.forEach((row,i)=>{
+    if(fc && row.course!==fc) return;
+    if(q && !norm(row.sire||'').includes(q)) return;
+    shown++;
+    if(row.auto){
+      h+='<tr class="ev-auto">'+EV_COLS.map(c=>`<td class="${c[2]}">${(row[c[0]]||'')||'-'}</td>`).join('')+'<td class="c-del" title="自動データ(パンダズ)">🔒</td></tr>';
+    }else{
+      h+='<tr>'+EV_COLS.map(c=>`<td class="${c[2]}"><input data-i="${i}" data-f="${c[0]}" value="${(row[c[0]]||'').replace(/"/g,'&quot;')}"></td>`).join('')
+        +`<td class="c-del"><button class="del" data-del="${i}" title="削除">×</button></td></tr>`;
+    }
+  });
+  t.innerHTML=h;
+  t.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',e=>{
+    evidence[+e.target.dataset.i][e.target.dataset.f]=e.target.value; saveState();
+  }));
+  t.querySelectorAll('.del').forEach(b=>b.addEventListener('click',e=>{
+    const row=evidence[+e.target.dataset.del]; const ui=userEv.indexOf(row);
+    if(ui>=0){ userEv.splice(ui,1); rebuildEvidence(); renderEv(); analyze(); saveState(); }
+  }));
+  const cnt=document.getElementById('evCount');
+  if(cnt) cnt.textContent=`${shown}/${evidence.length}件`;
+}
+function evidenceFor(name){
+  const n=norm(name); if(!n) return [];
+  return evidence.filter(r=>norm(r.sire)===n && (r.course||r.tan||r.fuku));
 }
 
 /* ---- クロス検出 ---- */
@@ -337,6 +723,18 @@ function analyze(){
   html+=`<div class="linerow"><span class="ltag lt-bms">母父BMS</span><div class="lval">${bms}</div></div>`;
   html+='</div>';
 
+  // 👩 母スポットライト（各馬の母を必ず可視化＝補完）
+  const damMemo=(document.getElementById('nDamProduce')||{}).value||'';
+  if(dam!=='—'){
+    html+=`<div class="dam-spot">
+      <div class="dam-head"><span class="ltag lt-mare">母</span><b>${dam}</b>
+        <span class="dam-sub">母父 ${bms}｜牝系 ${mareLine.slice(0,3).join('→')||'—'}</span></div>
+      ${damMemo
+        ? `<div class="dam-memo">🗒 ${damMemo}</div>`
+        : `<div class="dam-memo muted">母の産駒成績・半きょうだいは下の「リサーチメモ」に記録するとここに表示（父中心の補完用）。</div>`}
+    </div>`;
+  }
+
   // 系統・ニックス
   const fsys=sysOf(sire), bsys=sysOf(bms);
   html+='<div class="sys">';
@@ -351,6 +749,54 @@ function analyze(){
   }else{
     html+=`<div class="nick"><span class="k">系統ヒント</span> 父・母父が系統マップ未登録です。正式名で入力するか、既知なら手動追加で判定できます（例：ディープインパクト＝サンデー系）。</div>`;
   }
+
+  // 🧬 サイアーライン系統評価
+  const flSys=sysOfLine(vals)||fsys, blSys=sysOfChain(vals,BMS_HEAPS)||bsys;
+  html+='<div class="card" style="margin-top:12px"><h2>🧬 サイアーライン系統評価</h2>';
+  html+=`<div class="sireeval"><span class="ltag lt-sire">父系</span><b>${sireLine.slice(0,4).join(' → ')||sire}</b>`
+    +(flSys?`<span class="sysname">${SYS_LABEL[flSys]}</span><span class="ev-txt">${SYS_EVAL[flSys]||''}</span>`:'<span class="muted">系統未判定</span>')+'</div>';
+  html+=`<div class="sireeval"><span class="ltag lt-mare">母父系</span><b>${bms}</b>`
+    +(blSys?`<span class="sysname">${SYS_LABEL[blSys]}</span><span class="ev-txt">${SYS_EVAL[blSys]||''}</span>`:'<span class="muted">系統未判定</span>')+'</div>';
+  html+=`<p class="muted" style="margin-top:6px">🏔 得意競馬場：${venueNote(sire,aptOf(sire),null)}</p>`;
+  html+='</div>';
+
+  // コース・距離適性（父・母父・主要クロスに当てはめ）
+  const aptTargets=[['父',sire],['母父',bms]];
+  if(crosses.length) aptTargets.push(['主要クロス',crosses[0].name]);
+  const aptRows=aptTargets.map(([role,nm])=>{
+    const a=aptOf(nm); if(!a) return {role,nm,a:null};
+    return {role,nm,a};
+  });
+  html+='<div class="card" style="margin-top:12px"><h2>🎯 コース・距離適性<span class="seed">定説ベース</span></h2>';
+  let anyApt=false;
+  aptRows.forEach(({role,nm,a})=>{
+    if(nm==='—'||!nm) return;
+    const ev=evidenceFor(nm);
+    const evHtml=ev.length?`<div class="apt-ev">${ev.map(r=>{
+      const parts=[r.course]; if(r.fuku)parts.push('複勝'+r.fuku+'%'); if(r.tan)parts.push('単勝'+r.tan+'%'); if(r.n)parts.push('N='+r.n); if(r.src)parts.push(r.src);
+      return `<span class="evchip">📈 ${parts.filter(Boolean).join(' / ')}</span>`;
+    }).join('')}</div>`:'';
+    if(a){
+      anyApt=true;
+      html+=`<div class="apt">
+        <div class="apt-h"><span class="apt-role">${role}</span><b>${nm}</b><span class="apt-lv">${a.level}</span></div>
+        <div class="apt-g">
+          <span>📏 ${a.dist}</span><span>🏇 ${a.best}</span><span>🌧 ${a.going}</span><span>🌱 ${a.surf}</span><span>⚡ ${a.type}</span>
+        </div>${evHtml}</div>`;
+    }else{
+      html+=`<div class="apt apt-none" style="flex-direction:column;align-items:flex-start"><div><span class="apt-role">${role}</span> <b>${nm}</b> … 適性データ未登録${ev.length?'（回収率データあり↓）':'（リサーチメモに追記して蓄積）'}</div>${evHtml}</div>`;
+    }
+  });
+  // 総合の狙い目（父を主・母父を補正として一言）
+  const fa=aptRows[0].a, ba=aptRows[1].a;
+  if(fa){
+    let synth=`父 <b>${sire}</b> の <b>${fa.dist}／${fa.best}／${fa.going}</b> が本線。`;
+    if(ba) synth+=`母父 <b>${bms}</b> の「${ba.type}」が距離・馬場・パワーを補正（例：${ba.going} や ${ba.surf} への対応幅）。`;
+    synth+='実際は当該コースの父・母父産駒成績で必ず裏取りを。';
+    html+=`<div class="nick" style="border-left-color:var(--good);margin-top:6px"><span class="k" style="color:var(--good)">狙い目まとめ</span><br>${synth}</div>`;
+  }
+  if(!anyApt) html+='<p class="muted">父・母父・主要クロスに登録済み適性がありません。正式な種牡馬名で入力すると当てはまります。</p>';
+  html+='</div>';
 
   html+='<div class="card" style="margin-top:12px"><h2>🧬 検出クロス</h2>';
   if(crosses.length===0){
@@ -432,7 +878,11 @@ const SIRES=['サンデーサイレンス','ディープインパクト','キン
  'ボールドルーラー','セクレタリアト','ハーツクライ','ステイゴールド','クロフネ','シンボリクリスエス',
  'アグネスタキオン','フジキセキ','ダイワメジャー','マンハッタンカフェ','スペシャルウィーク',
  'ロードカナロア','エピファネイア','キズナ','ドゥラメンテ','モーリス','オルフェーヴル','ルーラーシップ',
- 'ハービンジャー','キタサンブラック','ダイワスカーレット','ウオッカ','ヴァイスリージェント'];
+ 'ハービンジャー','キタサンブラック','ダイワスカーレット','ウオッカ','ヴァイスリージェント',
+ 'ジャスタウェイ','リアルインパクト','キンシャサノキセキ','ヴィクトワールピサ','ゴールドアリュール',
+ 'サトノダイヤモンド','スクリーンヒーロー','ヘニーヒューズ','ドレフォン','サトノクラウン',
+ 'ホッコータルマエ','サートゥルナーリア','エイシンフラッシュ','ブラックタイド','ネオユニヴァース',
+ 'リオンディーズ','レイデオロ','ドリームジャーニー','ゴールドシップ','エフフォーリア'];
 function fillSires(){
   const dl=document.getElementById('sires');
   dl.innerHTML=SIRES.map(s=>`<option value="${s}">`).join('');
@@ -441,16 +891,16 @@ function fillSires(){
 /* ---- 自動保存（localStorage） ---- */
 const LS_KEY='ped-cross-v1';
 let saveTimer=null;
-const NOTE_IDS=['nMareFam','nMareRel','nMareTrend','nNicks'];
+const NOTE_IDS=['nMareFam','nMareRel','nMareTrend','nDamProduce','nNicks'];
 function collectNotes(){
   const o={}; NOTE_IDS.forEach(id=>{ const el=document.getElementById(id); o[id]=el?el.value:''; }); return o;
 }
 function flashSaved(id){ const t=document.getElementById(id); if(!t) return; t.classList.add('show'); }
 function saveState(){
-  try{ localStorage.setItem(LS_KEY, JSON.stringify({visGen, vals, notes:collectNotes(), sysOverrides})); }catch(e){}
-  ['savedTag','noteSaved'].forEach(flashSaved);
+  try{ localStorage.setItem(LS_KEY, JSON.stringify({visGen, vals, notes:collectNotes(), sysOverrides, userEv})); }catch(e){}
+  ['savedTag','noteSaved','evSaved'].forEach(flashSaved);
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>['savedTag','noteSaved'].forEach(id=>{const t=document.getElementById(id);if(t)t.classList.remove('show');}),1200);
+  saveTimer=setTimeout(()=>['savedTag','noteSaved','evSaved'].forEach(id=>{const t=document.getElementById(id);if(t)t.classList.remove('show');}),1200);
 }
 function restoreState(){
   try{
@@ -460,6 +910,9 @@ function restoreState(){
     if(d){
       visGen = d.visGen||5;
       if(d.sysOverrides) sysOverrides=d.sysOverrides;
+      if(Array.isArray(d.userEv)) userEv=d.userEv;
+      else if(Array.isArray(d.evidence)) userEv=d.evidence.filter(r=>!r.auto);  // 旧形式移行
+      rebuildEvidence();
       if(d.notes) NOTE_IDS.forEach(id=>{ const el=document.getElementById(id); if(el&&d.notes[id]!=null) el.value=d.notes[id]; });
       if(d.vals){ Object.assign(vals, d.vals); return Object.keys(d.vals).length>0; }
     }
@@ -501,14 +954,325 @@ document.getElementById('btnPasteApply').onclick=applyPaste;
 /* ---- リサーチメモの自動保存 ---- */
 NOTE_IDS.forEach(id=>{
   const el=document.getElementById(id);
-  if(el) el.addEventListener('input', ()=>saveState());
+  if(el) el.addEventListener('input', ()=>{ saveState(); if(id==='nDamProduce') analyze(); });
 });
+
+/* ---- エビデンス表の操作 ---- */
+document.getElementById('btnEvAdd').onclick=()=>{ userEv.push({sire:'',course:'',period:'',n:'',fuku:'',tan:'',src:'手動',auto:false}); rebuildEvidence(); renderEv(); saveState(); };
+document.getElementById('btnEvReset').onclick=()=>{ if(confirm('自分で追加した行をすべて消去し、自動データ(パンダズ)のみに戻します。よろしいですか？')){ userEv=[]; rebuildEvidence(); renderEv(); analyze(); saveState(); } };
+
+/* ---- オッズ（odds-data.js、10分毎更新想定） ---- */
+function oddsFor(raceId,umaban){
+  const O=window.KEIBA_ODDS;
+  if(!O||!O.races||!O.races[raceId]) return null;
+  return O.races[raceId].horses[umaban]||null;
+}
+/* 妙味×オッズ＝市場が過小評価した血統馬（期待値の妙味） */
+function valueFlag(v,od){
+  if(!od||!od.tan) return '';
+  const tan=parseFloat(od.tan);
+  if(v.myaku>=10 && tan>=8) return '💰妙味';      // 強い血統シグナル×人気薄＝妙味
+  if((v.mark==='◎'||v.mark==='○') && tan>=10) return '💰過小評価';  // 回収データ良好×人気薄
+  return '';
+}
+
+/* ---- 🏇 レース血統ビュー（自動取得データ pedigree-data.js） ---- */
+function evForCourse(name,course){
+  return evidence.filter(r=>norm(r.sire)===norm(name) && r.course===course && (r.fuku||r.tan));
+}
+/* 血統ラインで系統・適性を遡って判定（直父/直母父が未登録でも分類できる） */
+const FATHER_HEAPS=[2,4,8,16], BMS_HEAPS=[6,12,24,48], BMS_CHAIN_HEAPS=[6,12,24];
+function sysOfChain(ped,heaps){ if(!ped)return null; for(const h of heaps){const s=sysOf(ped[h]); if(s)return s;} return null; }
+function aptOfChain(ped,heaps){ if(!ped)return null; for(const h of heaps){const a=aptOf(ped[h]); if(a)return a;} return null; }
+function bmsChain(ped){ if(!ped)return []; return BMS_CHAIN_HEAPS.map(h=>ped[h]).filter(Boolean); }
+
+/* 血統の芝/ダ傾向 → レースのコースに合うか */
+function bloodSurface(apt,fsys){
+  if(apt&&apt.surf){
+    const s=apt.surf;
+    if(/ダート主体/.test(s)) return {turf:false,dirt:true};
+    if(/兼用|芝ダート/.test(s)) return {turf:true,dirt:true};
+    return {turf:/芝/.test(s), dirt:/ダート[◎○]/.test(s)};
+  }
+  if(fsys==='mrp'||fsys==='native') return {turf:false,dirt:true};
+  if(fsys==='kinkame') return {turf:true,dirt:true};
+  if(fsys) return {turf:true,dirt:false};   // sunday/nd/roberto/nasrullah=芝寄り
+  return {turf:true,dirt:true};             // 不明=中立
+}
+function surfaceFit(apt,fsys,surface){
+  const b=bloodSurface(apt,fsys);
+  const want = surface==='ダ' ? b.dirt : b.turf;
+  const other = surface==='ダ' ? b.turf : b.dirt;
+  if(want && !other) return 'fit';   // 専門血統
+  if(want) return 'ok';              // 兼用でも走れる
+  return 'misfit';                   // 逆の血統
+}
+
+/* 出走馬の総合評価：回収率(実データ)＋コース適性(定説)で◎○▲△☆－ */
+/* 適性の距離帯がレース距離に合うか */
+function distFit(apt,dist){
+  if(!apt||!apt.dist||!dist) return false;
+  const nums=(apt.dist.match(/\d{3,4}/g)||[]).map(Number);
+  if(!nums.length) return false;
+  return dist>=Math.min(...nums)-100 && dist<=Math.max(...nums)+100;
+}
+/* 枠順適性：函館コースの枠バイアス（定説）＋馬の枠位置 */
+const WAKU_BIAS={
+  '函館芝1200':'内枠有利（小回り・先行）','函館芝1800':'内枠やや有利','函館芝2000':'ほぼフラット',
+  '函館芝2600':'ほぼフラット','函館ダ1000':'外枠有利（ダッシュ）','函館ダ1700':'内〜中枠有利'
+};
+function wakuPos(waku){ if(!waku)return ''; return waku<=3?'内':waku<=5?'中':'外'; }
+/* 前走ローテ・前走内容 */
+function parseYMD(s){
+  if(!s) return null;
+  if(/^\d{8}$/.test(s)) return new Date(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6,8));
+  const m=String(s).match(/(\d{4})\.(\d{1,2})\.(\d{1,2})/); return m?new Date(+m[1],+m[2]-1,+m[3]):null;
+}
+function rotenNote(prev,race){
+  if(!prev) return '前走データなし';
+  const d1=parseYMD(prev.date), d2=parseYMD((window.KEIBA_PED||{}).date);
+  let itv='';
+  if(d1&&d2){ const w=Math.round((d2-d1)/(7*864e5)); itv = w<=1?'連闘' : `中${w-1}週`; }
+  let dd='';
+  if(prev.dist&&race.dist){ dd = race.dist>prev.dist?`延長+${race.dist-prev.dist}` : race.dist<prev.dist?`短縮${race.dist-prev.dist}` : '同距離'; }
+  const surf = prev.surface&&race.surface&&prev.surface!==race.surface ? `${prev.surface}→${race.surface}替` : '';
+  return [itv, dd, surf, `前走${prev.place||''}${prev.surface||''}${prev.dist||''}`].filter(Boolean).join('｜');
+}
+function zenNote(prev){
+  if(!prev) return '—';
+  const win = prev.chaku===1?' 🏆':(prev.chaku&&prev.chaku<=3?' 好走':'');
+  return `${prev.chaku!=null?prev.chaku+'着':'?'}/${prev.num||'?'}頭${prev.pop?' '+prev.pop+'人気':''}｜上り${prev.agari||'-'}｜通過${prev.pass||'-'}｜${prev.going||'?'}${win}`;
+}
+/* ペース適性：血統の型から推定 */
+function paceTend(apt,fsys){
+  const ty=(apt&&apt.type)||'';
+  if(/瞬発|切れ/.test(ty)) return 'スロー〜上がり勝負向き';
+  if(/持続|先行/.test(ty)) return 'ハイペース・押し切り向き';
+  if(/スタミナ/.test(ty)) return '消耗戦・持続力型';
+  if(/パワー/.test(ty)) return 'タフな流れ・パワー勝負向き';
+  if(fsys==='sunday') return 'スロー〜上がり勝負向き';
+  if(fsys==='roberto'||fsys==='nd') return '消耗戦・持続力型';
+  if(fsys==='mrp'||fsys==='native'||fsys==='nasrullah') return 'ハイペース・スピード型';
+  return '—';
+}
+/* 良・重馬場適性（血統のgoing傾向） */
+function goingTend(apt){
+  if(!apt||!apt.going) return {tag:'—',wet:0};
+  const g=apt.going;
+  if(/道悪◎|重.*◎/.test(g)) return {tag:'道悪◎',wet:2};
+  if(/道悪|稍重|重|不良/.test(g)) return {tag:'道悪○',wet:1};
+  if(/軽い|良馬場/.test(g)) return {tag:'良馬場向き',wet:-1};
+  return {tag:'標準',wet:0};
+}
+function evaluateHorse(h,race){
+  const ped=h.ped;
+  const fsys=sysOfChain(ped,FATHER_HEAPS)||sysOf(h.sire);
+  const bsys=sysOfChain(ped,BMS_HEAPS)||sysOf(h.bms);
+  const fApt=aptOf(h.sire)||aptOfChain(ped,[4,8,16]);      // 表示用（父系ライン広め）
+  const fAptClose=aptOf(h.sire)||aptOf(ped&&ped[4]);       // ☆判定用（父・父父のみ）
+  const bApt=aptOf(h.bms)||aptOfChain(ped,[12,24]);
+  const evF=evForCourse(h.sire,race.course), evB=evForCourse(h.bms,race.course);
+  let best=null;
+  [['父',h.sire],['母父',h.bms]].forEach(([who,nm])=>evForCourse(nm,race.course).forEach(r=>{
+    const v=parseFloat(r.fuku||r.tan||0); const isFuku=!!r.fuku;
+    if(best===null||v>best.roi) best={roi:v,who,isFuku,r};
+  }));
+  const fit=surfaceFit(fApt,fsys,race.surface);
+  // ☆条件：父(系)の得意条件が「芝ダ＋距離」までコースに合致（データ無いが血統的に狙える）
+  const dokan = fAptClose && surfaceFit(fAptClose,fsys,race.surface)==='fit' && distFit(fAptClose,race.dist);
+  let mark,score,basis;
+  if(best){
+    mark = best.roi>=100?'◎' : best.roi>=88?'○' : best.roi>=80?'▲' : '△';
+    score = 1000+best.roi;                          // 実データ馬は必ず上位
+    basis = `${best.who}血統がこのコースで${best.isFuku?'複勝':'単勝'}回収${best.roi}%（実証）`;
+  } else if(fit==='misfit'){ mark='－'; score=5; basis='血統がこのコースにミスマッチ（逆の芝ダ）'; }
+  else if(dokan){ mark='☆'; score=80; basis=`父${aptOf(h.sire)?'':'系'}の得意条件（${fAptClose.dist}）がコースにドンピシャ（回収データ無）`; }
+  else { mark='・'; score=40; basis='血統は対応域だが、際立った適性シグナル・回収データなし'; }
+  // 良・重馬場適性：道悪の日は道悪巧者を加点／良馬場向きを割引
+  const gt=goingTend(fApt);
+  const wet = race.going && /稍重|重|不良/.test(race.going);
+  if(wet && mark!=='－'){
+    if(gt.wet>=2){ score+=8; basis+='／道悪◎血統で馬場妙味'; }
+    else if(gt.wet<=-1){ score-=6; basis+='／良馬場向きで道悪は割引'; }
+  }
+  // 亀谷式 ローテ×国系統：短縮×米国型／延長×欧州型が浮上
+  const nation=nationOf(h.sire,fsys);
+  let roteBoost=null;
+  if(h.prev && h.prev.dist && race.dist && nation && mark!=='－'){
+    const d=race.dist-h.prev.dist;
+    if(d<0 && nation==='米'){ score+=10; roteBoost='短縮×米国型 ◎（スピード活きる）'; }
+    else if(d>0 && nation==='欧'){ score+=10; roteBoost='延長×欧州型 ◎（スタミナ活きる）'; }
+    else if(d<0 && nation==='欧'){ score-=5; roteBoost='短縮×欧州型 ◁（忙しい）'; }
+    else if(d>0 && nation==='米'){ score-=5; roteBoost='延長×米国型 ◁（分が悪い）'; }
+    else if(d<0 && nation==='日'){ roteBoost='短縮×日本型 ○（対応可）'; }
+    else if(d>0 && nation==='日'){ roteBoost='延長×日本型 ○（対応可）'; }
+    if(roteBoost && /◎/.test(roteBoost)) basis+='／'+roteBoost;
+  }
+  // 亀谷 ブラッドバイアス：函館=洋芝はパワー要求(欧州型/Tサンデー/ナスルーラ有利)、ダートは米国型有利
+  const subsys=subSysOf(h.sire,fsys);
+  let bias=0, biasNote='';
+  if(mark!=='－'){
+    if(race.surface==='芝'){
+      if(nation==='欧'){ bias=12; biasNote='洋芝×欧州型◎（パワー要る函館芝）'; }
+      else if(subsys==='tsun'){ bias=8; biasNote='洋芝×Tサンデー系○（欧州的スタミナ）'; }
+      else if(fsys==='nasrullah'){ bias=8; biasNote='洋芝×ナスルーラ系○（洋芝巧者）'; }
+      else if(nation==='米'){ bias=-4; biasNote='洋芝×米国型△（軽いスピードは割引）'; }
+    }else if(race.surface==='ダ'){
+      if(nation==='米'){ bias=12; biasNote='ダート×米国型◎'; }
+      else if(nation==='欧'){ bias=4; biasNote='ダート×欧州型○（パワー）'; }
+    }
+    score+=bias;
+    if(bias>=8) basis+='／'+biasNote;
+  }
+  // 妙味スコア（亀谷シグナル＝データに乗っていない旨味。印とは別トラック）
+  const roteHot = roteBoost && /◎/.test(roteBoost);
+  const myaku = (bias>0?bias:0) + (roteHot?8:0) + (dokan?5:0);
+  const myakuStars = myaku>=16?'★★★' : myaku>=10?'★★' : myaku>=5?'★' : '';
+  return {mark,score,basis,roi:best?best.roi:null,who:best?best.who:null,isFuku:best?best.isFuku:false,
+    fsys,bsys,fApt,bApt,fAptClose,dokan,evF,evB,fit,gt,wet,nation,roteBoost,subsys,bias,biasNote,myaku,myakuStars};
+}
+const MARK_CLS={'◎':'roi-hi','○':'roi-mid','▲':'m-blue','☆':'m-star','△':'roi-lo','・':'roi-lo','－':'roi-lo'};
+/* ---- タブ ---- */
+function showTab(name){
+  document.querySelectorAll('#tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.dataset.panel===name));
+  window.scrollTo({top:0});
+}
+document.querySelectorAll('#tabs .tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
+function renderRaceView(){
+  const data=window.KEIBA_PED;
+  const card=document.getElementById('raceCard');
+  const empty=document.getElementById('raceEmpty');
+  if(!data||!data.races||!data.races.length){ card.hidden=true; if(empty)empty.hidden=false; showTab('ped'); return; }
+  if(empty)empty.hidden=true;
+  card.hidden=false;
+  document.getElementById('raceMeta').textContent=`${data.track||''} ${data.date||''}`;
+  const sel=document.getElementById('raceSel');
+  if(!sel.dataset.filled){
+    sel.innerHTML=data.races.map((r,i)=>`<option value="${i}">${r.no}R ${r.course}${r.name?' '+r.name:''}</option>`).join('');
+    sel.dataset.filled='1';
+    sel.onchange=drawRace; document.getElementById('raceSortMode').onchange=drawRace;
+  }
+  drawRace();
+}
+function drawRace(){
+  const data=window.KEIBA_PED;
+  const idx=+document.getElementById('raceSel').value||0;
+  const race=data.races[idx];
+  const sortMode=(document.getElementById('raceSortMode')||{}).value||'buy';
+  const goTag = race.going ? `｜馬場:${race.going}${/稍重|重|不良/.test(race.going)?' 🌧道悪':''}` : '';
+  const O=window.KEIBA_ODDS;
+  const oddsTime = O&&O.races&&O.races[race.raceId]&&O.races[race.raceId].datetime ? `｜💴オッズ ${O.races[race.raceId].datetime.slice(5,16)}` : (O?'｜オッズ未取得':'');
+  document.getElementById('raceMeta').textContent=`${data.track||''} ${data.date||''} ${race.no}R ${race.course}${goTag}${oddsTime}`;
+  // 同一馬の重複除去（馬番のある行を優先）
+  const seen={}; const uniq=[];
+  race.horses.forEach(h=>{ const k=h.horseId||h.name; if(!seen[k]||(seen[k].umaban==null&&h.umaban!=null)){ seen[k]=h; } });
+  race.horses.forEach(h=>{ const k=h.horseId||h.name; if(seen[k]===h) uniq.push(h); });
+  let horses=uniq.map(h=>({h, v:evaluateHorse(h,race)}));
+  if(sortMode==='buy') horses.sort((a,b)=> b.v.score-a.v.score || (a.h.umaban||99)-(b.h.umaban||99));
+  else if(sortMode==='myaku') horses.sort((a,b)=> b.v.myaku-a.v.myaku || b.v.score-a.v.score);
+  // 想定ペース（出走馬の国系統構成から）
+  const nc={日:0,米:0,欧:0};
+  horses.forEach(({v})=>{ if(v.nation) nc[v.nation]++; });
+  const paceEl=document.getElementById('racePace');
+  if(paceEl){
+    const tot=nc.日+nc.米+nc.欧||1;
+    let pace = nc.米/tot>=0.4?'ハイペース傾向 → 差し・欧州型/短縮馬が浮上' : (nc.米<=1&&nc.日/tot>=0.5?'スロー傾向 → 逃げ先行・瞬発力(日本型)が有利' : '平均ペース想定');
+    const courseBias = race.surface==='芝' ? '函館芝＝洋芝：パワー要求 → 欧州型・Tサンデー系・ナスルーラ系が有利' : race.surface==='ダ' ? '函館ダート：米国型が有利' : '';
+    paceEl.innerHTML=`🏁 想定ペース：<b>${pace}</b> <span class="sub">（国系統 日${nc.日}/米${nc.米}/欧${nc.欧}）</span>${courseBias?`<div class="sub" style="margin-top:3px">🌱 ${courseBias}</div>`:''}`;
+  }
+  let html='<tr><th class="mk">印</th><th class="uma">馬番</th><th>馬名 / 父系・国系統</th><th class="roi">複勝回収</th><th></th></tr>';
+  horses.forEach(({h,v})=>{
+    const mkCls=MARK_CLS[v.mark]||'roi-lo';
+    const fTag=v.fsys?SYS_LABEL[v.fsys]:'系統?';
+    const nBadge=v.nation?`<span class="nbadge ${NATION_CLS[v.nation]}">${NATION_LABEL[v.nation]}</span>`:'';
+    const roteFlag=v.roteBoost&&/◎/.test(v.roteBoost)?'<span class="rote-hot">🔥ローテ◎</span>':'';
+    const biasFlag=v.bias>=6?`<span class="bias-hot">${race.surface==='芝'?'洋芝◎':'ダ◎'}</span>`:'';
+    const roiCls=v.roi>=100?'roi-hi':v.roi>=88?'roi-mid':'roi-lo';
+    const myakuTag=v.myakuStars?`<div class="myaku">${v.myakuStars} 妙味</div>`:'';
+    const od=oddsFor(race.raceId,h.umaban);
+    const oddsTxt=od&&od.tan?`<div class="odds">単${od.tan}${od.pop?` <span class="sub">${od.pop}人</span>`:''}</div>`:'';
+    const vFlag=valueFlag(v,od);
+    const roiTxt=(v.roi!=null
+      ? `<b class="${roiCls}">${v.isFuku?'複':'単'}${v.roi}<span class="u">%</span></b><div class="sub">${v.who}血統</div>`
+      : `<span class="u">— <span class="sub">${v.mark==='☆'?'血統○':v.mark==='－'?'不適':'データ無'}</span></span>`)+myakuTag+oddsTxt;
+    html+=`<tr class="main ${v.mark==='◎'||v.mark==='○'?'rv-buy':''}" data-uma="${h.umaban}">
+      <td class="mk ${mkCls}">${v.mark}</td>
+      <td class="uma">${h.umaban||''}</td>
+      <td><div class="hn">${h.name||'?'} ${nBadge} ${biasFlag} ${roteFlag} ${vFlag?`<span class="val-hot">${vFlag}</span>`:''}</div><div class="sub">父 ${h.sire||'?'}〔${fTag}〕／母父 ${h.bms||'?'}</div></td>
+      <td class="roi">${roiTxt}</td>
+      <td><button class="load" data-race="${idx}" data-uma="${h.umaban}">読込</button></td>
+    </tr>`;
+  });
+  const t=document.getElementById('raceView');
+  t.innerHTML=html;
+  // 行タップで父系ライン等を展開
+  t.querySelectorAll('tr.main').forEach(tr=>tr.addEventListener('click',e=>{
+    if(e.target.classList.contains('load')) return;
+    const uma=tr.dataset.uma;
+    const nx=tr.nextElementSibling;
+    if(nx&&nx.classList.contains('rv-detail')){ nx.remove(); return; }
+    t.querySelectorAll('.rv-detail').forEach(d=>d.remove());
+    const horse=race.horses.find(x=>String(x.umaban)===uma);
+    if(!horse) return;
+    const v=evaluateHorse(horse,race);
+    const fChain=sireChain(horse.ped), bChain=bmsChain(horse.ped);
+    const fsub=subSysOf(horse.sire,v.fsys);
+    const evHtml=[...v.evF.map(r=>['父',r]),...v.evB.map(r=>['母父',r])].map(([who,r])=>
+      `<span class="evchip">📈${who} ${r.course} 複${r.fuku||'-'}% 単${r.tan||'-'}% ${r.src||''}</span>`).join(' ')
+      ||'<span class="sub">このコースの回収率データなし（データタブで追記可）</span>';
+    const fitTxt = v.fit==='fit'?'専門で合致':v.fit==='ok'?'対応可':'ミスマッチ';
+    const det=document.createElement('tr');
+    det.className='rv-detail';
+    const roteTxt=[v.roteBoost?`<b>${v.roteBoost}</b>`:'', rotenNote(horse.prev,race)].filter(Boolean).join(' ｜ ');
+    det.innerHTML=`<td colspan="5">
+      <div class="dg-head"><b class="${MARK_CLS[v.mark]}">${v.mark}</b> ${v.basis}</div>
+      <div class="dg"><span class="dg-k">🧬 血統</span><span class="dg-v">父 <b>${horse.sire||'?'}</b>〔${v.fsys?SYS_LABEL[v.fsys]:'系統?'}${fsub?'·'+SUBSYS_LABEL[fsub]:''}／${natBadge(v.nation)}〕${fChain.length>1?` <span class="sub">${fChain.slice(0,3).join('→')}</span>`:''}　母父 <b>${horse.bms||'?'}</b>〔${v.bsys?SYS_LABEL[v.bsys]:'系統?'}／${natBadge(nationOf(horse.bms,v.bsys))}〕${(()=>{const c=nationCombo(v.nation,nationOf(horse.bms,v.bsys));return c?`<div class="sub">配合 ${c}</div>`:'';})()}</span></div>
+      ${v.biasNote?`<div class="dg"><span class="dg-k">🌱 バイアス</span><span class="dg-v"><b>${v.biasNote}</b>（亀谷式・洋芝/ダートの血統相性）</span></div>`:''}
+      <div class="dg"><span class="dg-k">🎯 適性</span><span class="dg-v">${v.fApt?`${v.fApt.dist}・${race.surface}${fitTxt==='専門で合致'?'◎':fitTxt==='対応可'?'○':'△'}`:'適性データ無'} ｜ 馬場 ${v.fApt?v.gt.tag:'—'} ｜ ${horse.waku?horse.waku+'枠'+wakuPos(horse.waku):'枠?'}(${WAKU_BIAS[race.course]||'—'}) ｜ ${paceTend(v.fApt,v.fsys)} ｜ ${venueNote(horse.sire,v.fApt,v)}</span></div>
+      <div class="dg"><span class="dg-k">🔄 ローテ</span><span class="dg-v">${roteTxt} ｜ 前走 ${zenNote(horse.prev)}</span></div>
+      <div class="dg"><span class="dg-k">👤 陣営</span><span class="dg-v">${horse.jockey||'—'} ／ ${horse.trainer?horse.trainer+'厩舎':'—'}</span></div>
+      <div class="dg"><span class="dg-k">📈 回収率</span><span class="dg-v">${evHtml}</span></div>
+    </td>`;
+    tr.after(det);
+  }));
+  t.querySelectorAll('.load').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    const r=window.KEIBA_PED.races[+e.target.dataset.race];
+    const horse=r.horses.find(x=>String(x.umaban)===e.target.dataset.uma);
+    if(horse&&horse.ped){
+      for(const k in vals) delete vals[k];
+      Object.assign(vals, horse.ped);
+      visGen=5; buildTable(); analyze(); saveState();
+      showTab('ped');
+      document.getElementById('result').scrollIntoView({behavior:'smooth',block:'start'});
+    }
+  }));
+}
 
 /* ---- 起動 ---- */
 fillSires();
 const restored=restoreState();
+fillEvFilter();
+renderEv();
+renderRaceView();
 buildTable();
 if(restored) analyze();
+
+/* ---- オッズ自動更新（3分毎にodds-data.jsを取り直す） ---- */
+async function pollOdds(){
+  try{
+    const res=await fetch('odds-data.js?t='+Date.now(),{cache:'no-store'});
+    if(!res.ok) return;
+    const txt=await res.text();
+    if(!/KEIBA_ODDS/.test(txt)) return;
+    new Function(txt)();   // window.KEIBA_ODDS を最新に差し替え
+    const p=document.querySelector('.panel[data-panel="race"]');
+    if(p&&p.classList.contains('active')&&window.KEIBA_PED) drawRace();
+  }catch(e){}
+}
+setInterval(pollOdds, 180000);
 
 /* ---- PWA ---- */
 if('serviceWorker' in navigator){

@@ -1,0 +1,37 @@
+name: build-race
+# 開催日の朝に函館全レースの血統(父/母父/5代)・前走・回収率を取得してコミット。手動実行も可。
+on:
+  schedule:
+    - cron: '0 22 * * 5,6'   # UTC 金/土 22:00 = JST 土/日 07:00
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'YYYYMMDD（空欄=今日JST）'
+        required: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Scrape blood + evidence
+        run: |
+          DATE="${{ github.event.inputs.date }}"
+          if [ -z "$DATE" ]; then DATE=$(TZ=Asia/Tokyo date +%Y%m%d); fi
+          echo "DATE=$DATE" >> "$GITHUB_ENV"
+          node scrape/build-hakodate.mjs "$DATE"
+      - name: Commit if changed
+        run: |
+          git config user.name "race-bot"
+          git config user.email "race-bot@users.noreply.github.com"
+          git add pedigree-data.js evidence-data.js
+          if git diff --cached --quiet; then
+            echo "no change"
+          else
+            git commit -m "race data $DATE [skip ci]"
+            git push
+          fi
