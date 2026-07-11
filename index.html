@@ -136,6 +136,15 @@
   .rote-hot{font-size:10px;font-weight:700;color:var(--accent2);background:rgba(255,209,102,.14);padding:1px 6px;border-radius:99px}
   .bias-hot{font-size:10px;font-weight:700;color:var(--good);background:rgba(74,222,128,.14);padding:1px 6px;border-radius:99px}
   .pace{font-size:12px;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;margin-bottom:10px}
+  /* 推奨買い目 */
+  .rec{background:rgba(108,192,255,.07);border:1px solid var(--accent);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+  .rec-head{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px}
+  .rec-head.rec-skip{color:var(--sub)}
+  .rec-bets{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+  .rec-bet{font-size:14px;font-weight:700;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+  .rec-bet b{color:var(--accent2);font-size:15px}
+  .rec-body{font-size:12px;color:var(--txt);line-height:1.6}
+  .rec-body ul{margin:3px 0 6px;padding-left:18px} .rec-body li{margin-bottom:3px}
   .roi-hi{color:var(--good)} .roi-mid{color:var(--accent2)} .roi-lo{color:var(--sub)}
   .m-blue{color:var(--accent)} .m-star{color:#c084fc}
   .legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--sub);margin-bottom:10px}
@@ -205,6 +214,7 @@
         <span><b class="roi-hi">◎</b>複勝≥100</span><span><b class="roi-mid">○</b>≥88</span><span><b class="m-blue">▲</b>≥80</span><span><b class="roi-lo">△</b>実証&lt;80</span><span><b class="m-star">☆</b>父系がコースにドンピシャ(データ無)</span><span><b class="roi-lo">・</b>対応域</span><span><b class="roi-lo">－</b>不適</span>
       </div>
       <div class="pace" id="racePace"></div>
+      <div class="rec" id="raceRec"></div>
       <div class="scroll"><div class="scroll-inner" style="min-width:560px"><table class="rvtable" id="raceView"></table></div></div>
       <p class="muted" style="margin:8px 0 0">◎○△▲＝このコースの<b>複勝回収率</b>エビデンス一致。行タップで父系ラインを展開、「読込」で5代クロス診断へ。データ更新は <code>scrape/build-hakodate.mjs</code>。</p>
     </div>
@@ -976,6 +986,37 @@ function valueFlag(v,od){
   return '';
 }
 
+/* ---- 推奨買い目の自動生成（血統×回収×馬場×妙味×オッズ） ---- */
+function recommendBets(race, hs, oddsRace){
+  const um=x=>x.h.umaban, nm=x=>x.h.name;
+  const tanOf=x=>{ const o=oddsRace&&oddsRace.horses&&oddsRace.horses[x.h.umaban]; return o?parseFloat(o.tan)||null:null; };
+  const wet=/稍重|重|不良/.test(race.going||'');
+  const rated=hs.filter(x=> x.v.mark==='◎'||x.v.mark==='○'||x.v.myaku>=8||x.v.bias>=6||(x.v.roi!=null&&x.v.roi>=80));
+  const axis=hs[0];
+  if(rated.length<2 || !axis || axis.v.score<50){
+    return {verdict:'見送り', reasons:['血統・回収の明確なシグナルに乏しく、期待値が読みにくいレース。無理に張らない。']};
+  }
+  const others=hs.filter(x=>x!==axis);
+  const myaku=others.find(x=>x.v.myaku>=10)||others.find(x=>x.v.myaku>=8)||null;
+  const partners=others.filter(x=> x.v.mark==='◎'||x.v.mark==='○'||x.v.myaku>=8||x.v.bias>=6||(x.v.roi!=null&&x.v.roi>=80)).slice(0,4);
+  const pUm=[...new Set(partners.map(um))];
+  const reasons=[];
+  reasons.push(`馬場${race.going||'?'}${wet?'＝道悪：欧州型・道悪◎血統が有利／軽い日本型は割引':'：標準'}`);
+  const aSig=[axis.v.roi!=null?`複勝回収${axis.v.roi}%(実証)`:(axis.v.mark==='☆'?'血統適性ドンピシャ':'血統対応'),
+    axis.v.bias>=6?(race.surface==='芝'?'洋芝◎':'ダ◎'):'', (/◎/.test(axis.v.roteBoost||''))?'ローテ◎':'',
+    axis.v.nation?NATION_LABEL[axis.v.nation]:''].filter(Boolean).join('・');
+  reasons.push(`軸 ${um(axis)}${nm(axis)}：${aSig}${(()=>{const t=tanOf(axis);return t?`（単${t}）`:'';})()}`);
+  if(myaku){ const t=tanOf(myaku);
+    reasons.push(`妙味 ${um(myaku)}${nm(myaku)}：${myaku.v.myakuStars}${myaku.v.biasNote?'＝'+myaku.v.biasNote.replace(/（.*/,''):''}${(myaku.v.roteBoost&&/◎/.test(myaku.v.roteBoost))?'／'+myaku.v.roteBoost.replace(/（.*/,''):''}${t?`（単${t}${t>=8?'＝人気薄で期待値大':''}）`:''}`);
+  }
+  const bets=[];
+  bets.push(`複勝 <b>${um(axis)}</b>`);
+  const wideT=[myaku, ...partners].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i && x!==axis).slice(0,2);
+  if(wideT.length) bets.push(`ワイド <b>${um(axis)}</b> - ${wideT.map(um).join('・')}`);
+  if(pUm.length>=2) bets.push(`3連複 <b>${um(axis)}</b>軸ながし → ${pUm.slice(0,4).join('・')}`);
+  return {verdict:'勝負', bets, reasons, axisUm:um(axis)};
+}
+
 /* ---- 🏇 レース血統ビュー（自動取得データ pedigree-data.js） ---- */
 function evForCourse(name,course){
   return evidence.filter(r=>norm(r.sire)===norm(name) && r.course===course && (r.fuku||r.tan));
@@ -1188,6 +1229,20 @@ function drawRace(){
     const courseBias = race.surface==='芝' ? '函館芝＝洋芝：パワー要求 → 欧州型・Tサンデー系・ナスルーラ系が有利' : race.surface==='ダ' ? '函館ダート：米国型が有利' : '';
     const wetNote = isWet ? `<div class="sub" style="margin-top:3px;color:var(--accent)">🌧 馬場${liveGoing}＝道悪：欧州型・道悪◎血統をさらに上げ、良馬場向きは割引（評価に反映済）</div>` : '';
     paceEl.innerHTML=`🏁 想定ペース：<b>${pace}</b> <span class="sub">（国系統 日${nc.日}/米${nc.米}/欧${nc.欧}）</span>${courseBias?`<div class="sub" style="margin-top:3px">🌱 ${courseBias}</div>`:''}${wetNote}`;
+  }
+  // 推奨買い目（自動生成）
+  const recEl=document.getElementById('raceRec');
+  if(recEl){
+    const sorted=horses.slice().sort((a,b)=>b.v.score-a.v.score);
+    const rec=recommendBets(race, sorted, oddsRace);
+    if(rec.verdict==='見送り'){
+      recEl.innerHTML=`<div class="rec-head rec-skip">🚫 推奨：見送り</div><div class="rec-body">${rec.reasons.join('<br>')}</div>`;
+    }else{
+      recEl.innerHTML=`<div class="rec-head">🎯 推奨買い目（自動）</div>`+
+        `<div class="rec-bets">${rec.bets.map(b=>`<div class="rec-bet">${b}</div>`).join('')}</div>`+
+        `<div class="rec-body"><b>根拠</b><ul>${rec.reasons.map(r=>`<li>${r}</li>`).join('')}</ul>`+
+        `<div class="sub">※血統×回収×馬場×妙味×オッズの自動サイン。的中保証ではなく期待値の目安。道悪は複勝・ワイド薄めが無難。</div></div>`;
+    }
   }
   let html='<tr><th class="mk">印</th><th class="uma">馬番</th><th>馬名 / 父系・国系統</th><th class="roi">複勝回収</th><th></th></tr>';
   horses.forEach(({h,v})=>{
