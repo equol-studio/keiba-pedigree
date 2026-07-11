@@ -18,6 +18,20 @@ async function raceIdsForDate(date){
   const ids=[...new Set([...t.matchAll(/race_id=(\d{12})/g)].map(m=>m[1]))];
   return ids.filter(id=>id.slice(4,6)==='02').sort();  // 02=函館
 }
+// ライブ馬場・天候（タグ分割に対応してタグ除去後にパース）
+async function fetchGoing(raceId){
+  for(let a=0;a<2;a++){   // レート制限でRaceData01が落ちることがあるのでリトライ
+    try{
+      const t=await getText(`https://race.netkeiba.com/race/shutuba.html?race_id=${raceId}`);
+      const clean=t.replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ');
+      const g=((clean.match(/馬場[:：]\s*(不良|稍\s*重|良|重)/)||[])[1]||'').replace(/\s/g,'');
+      const w=(clean.match(/(?:天候|天気)[:：]\s*(晴|曇|雨|小雨|雪)/)||[])[1]||'';
+      if(g||w) return {going:g, weather:w};
+    }catch(e){}
+    await sleep(700);
+  }
+  return {going:'',weather:''};
+}
 async function fetchOdds(raceId){
   const u=`https://race.netkeiba.com/api/api_get_jra_odds.html?race_id=${raceId}&type=1&action=init`;
   const res=await fetch(u,{headers:{'User-Agent':UA,'Referer':`https://race.netkeiba.com/odds/index.html?race_id=${raceId}`}});
@@ -42,11 +56,18 @@ async function main(){
   for(const id of ids){
     try{
       const o=await fetchOdds(id);
-      if(o && Object.keys(o.horses).length){ races[id]=o; live++; }
+      const g=await fetchGoing(id);
+      if(o && Object.keys(o.horses).length){ races[id]=Object.assign(o,g); live++; }
+      else if(g.going){ races[id]={horses:{},going:g.going,weather:g.weather}; }  // オッズ無くても馬場は残す
       await sleep(250);
     }catch(e){ /* skip */ }
   }
-  const data={ fetchedAt:new Date().toISOString(), date, races };
+  // 現在の函館馬場（開催全体で共通・雨で悪化）＝取得できた中で最も重い値を、空のレースに補完
+  const sev={'不良':4,'重':3,'稍重':2,'良':1};
+  const goings=Object.values(races).map(r=>r.going).filter(Boolean);
+  const cur=goings.sort((a,b)=>(sev[b]||0)-(sev[a]||0))[0]||'';
+  for(const id in races){ if(!races[id].going && cur){ races[id].going=cur; races[id].goingEst=true; } }
+  const data={ fetchedAt:new Date().toISOString(), date, currentGoing:cur, races };
   writeFileSync(out, 'window.KEIBA_ODDS='+JSON.stringify(data)+';\n', 'utf8');
   console.error(`WROTE ${out} races=${Object.keys(races).length}/${ids.length} (live odds=${live})`);
 }

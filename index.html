@@ -1159,11 +1159,17 @@ function renderRaceView(){
 function drawRace(){
   const data=window.KEIBA_PED;
   const idx=+document.getElementById('raceSel').value||0;
-  const race=data.races[idx];
+  const raceRaw=data.races[idx];
   const sortMode=(document.getElementById('raceSortMode')||{}).value||'buy';
-  const goTag = race.going ? `｜馬場:${race.going}${/稍重|重|不良/.test(race.going)?' 🌧道悪':''}` : '';
   const O=window.KEIBA_ODDS;
-  const oddsTime = O&&O.races&&O.races[race.raceId]&&O.races[race.raceId].datetime ? `｜💴オッズ ${O.races[race.raceId].datetime.slice(5,16)}` : (O?'｜オッズ未取得':'');
+  const oddsRace = O&&O.races&&O.races[raceRaw.raceId] ? O.races[raceRaw.raceId] : null;
+  // ライブ馬場（オッズ取得時の最新）を血統scrape時の馬場より優先
+  const liveGoing = oddsRace&&oddsRace.going ? oddsRace.going : raceRaw.going;
+  const race = Object.assign({}, raceRaw, {going: liveGoing});
+  const isWet = /稍重|重|不良/.test(liveGoing||'');
+  const goingEst = oddsRace&&oddsRace.goingEst;
+  const goTag = liveGoing ? `｜馬場:${liveGoing}${goingEst?'(推定)':''}${isWet?' 🌧道悪':''}${oddsRace&&oddsRace.weather?'('+oddsRace.weather+')':''}` : '';
+  const oddsTime = oddsRace&&oddsRace.datetime ? `｜💴 ${oddsRace.datetime.slice(5,16)}` : (O?'｜オッズ未取得':'');
   document.getElementById('raceMeta').textContent=`${data.track||''} ${data.date||''} ${race.no}R ${race.course}${goTag}${oddsTime}`;
   // 同一馬の重複除去（馬番のある行を優先）
   const seen={}; const uniq=[];
@@ -1180,7 +1186,8 @@ function drawRace(){
     const tot=nc.日+nc.米+nc.欧||1;
     let pace = nc.米/tot>=0.4?'ハイペース傾向 → 差し・欧州型/短縮馬が浮上' : (nc.米<=1&&nc.日/tot>=0.5?'スロー傾向 → 逃げ先行・瞬発力(日本型)が有利' : '平均ペース想定');
     const courseBias = race.surface==='芝' ? '函館芝＝洋芝：パワー要求 → 欧州型・Tサンデー系・ナスルーラ系が有利' : race.surface==='ダ' ? '函館ダート：米国型が有利' : '';
-    paceEl.innerHTML=`🏁 想定ペース：<b>${pace}</b> <span class="sub">（国系統 日${nc.日}/米${nc.米}/欧${nc.欧}）</span>${courseBias?`<div class="sub" style="margin-top:3px">🌱 ${courseBias}</div>`:''}`;
+    const wetNote = isWet ? `<div class="sub" style="margin-top:3px;color:var(--accent)">🌧 馬場${liveGoing}＝道悪：欧州型・道悪◎血統をさらに上げ、良馬場向きは割引（評価に反映済）</div>` : '';
+    paceEl.innerHTML=`🏁 想定ペース：<b>${pace}</b> <span class="sub">（国系統 日${nc.日}/米${nc.米}/欧${nc.欧}）</span>${courseBias?`<div class="sub" style="margin-top:3px">🌱 ${courseBias}</div>`:''}${wetNote}`;
   }
   let html='<tr><th class="mk">印</th><th class="uma">馬番</th><th>馬名 / 父系・国系統</th><th class="roi">複勝回収</th><th></th></tr>';
   horses.forEach(({h,v})=>{

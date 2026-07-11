@@ -1,0 +1,43 @@
+name: odds-loop
+# 1回の起動で約5.5時間、10分毎にオッズ＋馬場を取得しコミット（GitHubのcron単発は不発/遅延が多いため自己ループで確実化）
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: 'ループ継続分数（最大330）'
+        required: false
+        default: '330'
+  schedule:
+    - cron: '2 1 * * 6,0'    # UTC 土日01:02 = JST 10:02 に自動起動（バックアップ）
+jobs:
+  loop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Loop fetch odds + going every 10 min
+        run: |
+          git config user.name "odds-bot"
+          git config user.email "odds-bot@users.noreply.github.com"
+          MINS="${{ github.event.inputs.minutes }}"; [ -z "$MINS" ] && MINS=330
+          END=$(( $(date +%s) + MINS*60 ))
+          DATE=$(TZ=Asia/Tokyo date +%Y%m%d 2>/dev/null || date -u +%Y%m%d)
+          echo "loop date=$DATE for ${MINS}min"
+          while [ "$(date +%s)" -lt "$END" ]; do
+            node scrape/fetch-odds.mjs "$DATE" || true
+            git add odds-data.js
+            if ! git diff --cached --quiet; then
+              git pull --rebase --autostash origin master >/dev/null 2>&1 || true
+              git commit -m "odds $(date -u +'%H:%M')UTC [skip ci]" || true
+              git push origin master || true
+              echo "pushed $(date -u +%H:%M)UTC"
+            else
+              echo "no change $(date -u +%H:%M)UTC"
+            fi
+            sleep 600
+          done
