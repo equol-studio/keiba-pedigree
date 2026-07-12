@@ -269,6 +269,12 @@
 
   <!-- ===== データ ===== -->
   <section class="panel" data-panel="data">
+    <div class="card" id="reviewCard">
+      <h2>📒 検証ログ（予想 vs 結果）</h2>
+      <p class="muted" id="reviewIntro" style="margin:0 0 10px"></p>
+      <div class="scroll"><div class="scroll-inner" style="min-width:540px"><table class="evtable" id="reviewTable"></table></div></div>
+      <p class="muted" id="reviewNote" style="margin:8px 0 0;font-size:12px"></p>
+    </div>
     <div class="card" id="evCard">
       <h2>📚 コース別 回収率エビデンス<span class="saved" id="evSaved">保存</span></h2>
       <p class="muted" style="margin:0 0 10px"><b>🔒＝自動取得データ（パンダズ競馬 函館 2021-25／全種牡馬×コースの複勝回収率）</b>。父／母父が一致すると🎯適性・レース評価に自動反映。<b>単勝はブレるので複勝を優先</b>。自分の裏取りは「＋行を追加」で足せます（自動データは更新時に再取得）。</p>
@@ -315,6 +321,7 @@
 <script src="pedigree-data.js" onerror="window.__noPed=1"></script>
 <script src="evidence-data.js" onerror="window.__noEv=1"></script>
 <script src="odds-data.js" onerror="window.__noOdds=1"></script>
+<script src="review-log.js" onerror="window.__noReview=1"></script>
 <script>
 /* ---- 5代血統表: heapインデックス方式 ----
    pos2=父(gen1) pos3=母(gen1)、pos4..7=gen2 ... pos32..63=gen5
@@ -1461,6 +1468,22 @@ function drawRace(){
 fillSires();
 const restored=restoreState();
 fillEvFilter();
+function renderReview(){
+  const R=window.KEIBA_REVIEW; const t=document.getElementById('reviewTable');
+  if(!R||!t) return;
+  const io=document.getElementById('reviewIntro'); if(io) io.textContent=R.intro||'';
+  const es=R.entries||[];
+  let h='<tr><th>開催</th><th>馬場</th><th>参戦</th><th>軸複勝</th><th>カバー</th><th>勝馬内</th><th>軸複回収</th></tr>';
+  es.forEach(e=>{
+    const rate=e.races?Math.round(e.axisFuku/e.races*100):0;
+    const rcls=e.roiFuku>=100?'roi-hi':e.roiFuku>=60?'roi-mid':'roi-lo';
+    h+=`<tr><td>${e.date.slice(5)} ${e.track}</td><td>${e.going||'-'}</td><td>${e.races}R</td><td>${e.axisFuku}/${e.races}<span class="sub">(${rate}%)</span></td><td>${e.cover}%</td><td>${e.winInSet}/${e.races}</td><td class="${rcls}">${e.roiFuku}%</td></tr>`;
+  });
+  t.innerHTML=h;
+  const nt=document.getElementById('reviewNote');
+  if(nt&&es[0]) nt.textContent='最新開催メモ：'+(es[0].note||'');
+}
+renderReview();
 renderEv();
 renderRaceView();
 buildTable();
