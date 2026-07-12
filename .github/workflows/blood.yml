@@ -33,5 +33,6 @@ jobs:
             echo "no change"
           else
             git commit -m "race data $DATE [skip ci]"
-            git push
+            git pull --rebase --autostash origin master || true
+            git push origin master
           fi

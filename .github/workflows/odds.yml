@@ -28,5 +28,6 @@ jobs:
             echo "no odds change"
           else
             git commit -m "odds $(TZ=Asia/Tokyo date +'%m-%d %H:%M') [skip ci]"
-            git push
+            git pull --rebase --autostash origin master || true
+            git push origin master
           fi
