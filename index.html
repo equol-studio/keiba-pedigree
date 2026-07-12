@@ -153,6 +153,12 @@
   .rec-bets{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
   .rec-bet{font-size:14px;font-weight:700;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
   .rec-bet b{color:var(--accent2);font-size:15px}
+  .facs{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+  .fc{font-size:10px;font-weight:800;padding:1px 5px;border-radius:5px;line-height:1.5;white-space:nowrap}
+  .fc.go{background:rgba(34,192,125,.16);color:#7ef0b8;border:1px solid rgba(34,192,125,.4)}
+  .fc.ok{background:rgba(108,192,255,.14);color:#a9d6ff;border:1px solid rgba(108,192,255,.35)}
+  .fc.no{background:rgba(239,110,114,.14);color:#f4b6b8;border:1px solid rgba(239,110,114,.4)}
+  .fc.dim{background:rgba(255,255,255,.06);color:var(--sub);border:1px solid var(--line)}
   .rec-play-head{color:#e0b3ff;margin-top:4px}
   .rec-play .rec-bet{background:rgba(180,120,255,.09);border-color:rgba(180,120,255,.4)}
   .rec-play .rec-bet b{color:#d8a8ff}
@@ -1215,6 +1221,25 @@ function evaluateHorse(h,race){
     fsys,bsys,fApt,bApt,fAptClose,dokan,evF,evB,fit,gt,wet,nation,roteBoost,subsys,bias,biasNote,myaku,myakuStars};
 }
 const MARK_CLS={'◎':'roi-hi','○':'roi-mid','▲':'m-blue','☆':'m-star','△':'roi-lo','・':'roi-lo','－':'roi-lo'};
+/* 買い要素を一目で（馬を押さずに）：重馬場・距離・コース・小回り(函館=右) */
+function buyFactors(v,race){
+  const c=[];
+  const wetRace=/稍重|重|不良/.test(race.going||'');
+  if(wetRace&&v.gt){
+    if(v.gt.wet>=2) c.push('<span class="fc go">🌧重◎</span>');
+    else if(v.gt.wet>=1) c.push('<span class="fc ok">🌧重○</span>');
+    else if(v.gt.wet<=-1) c.push('<span class="fc no">🌧重✕</span>');
+  }
+  if(v.fApt&&v.fApt.dist){
+    c.push(distFit(v.fApt,race.dist)?`<span class="fc ok">📏${race.dist}◯</span>`:'<span class="fc dim">📏距離△</span>');
+  }
+  if(v.bias>=8) c.push(`<span class="fc go">🎯${race.surface==='芝'?'洋芝◎':'ダ◎'}</span>`);
+  else if(v.fit==='misfit') c.push('<span class="fc no">🎯コース✕</span>');
+  else if(v.fit==='fit') c.push(`<span class="fc ok">🎯${race.surface==='芝'?'芝○':'ダ○'}</span>`);
+  const best=(v.fApt&&v.fApt.best)||'';
+  if(/小回り|函館/.test(best)) c.push('<span class="fc ok">↩小回り◎</span>');
+  return c.length?`<div class="facs">${c.join('')}</div>`:'';
+}
 /* ---- タブ ---- */
 function showTab(name){
   document.querySelectorAll('#tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
@@ -1308,7 +1333,7 @@ function drawRace(){
     html+=`<tr class="main ${v.mark==='◎'||v.mark==='○'?'rv-buy':''}" data-uma="${h.umaban}">
       <td class="mk ${mkCls}">${v.mark}</td>
       <td class="uma">${h.umaban?`<span class="wb wk${h.waku||0}">${h.umaban}</span>`:''}</td>
-      <td><div class="hn">${h.name||'?'} ${nBadge} ${biasFlag} ${roteFlag} ${vFlag?`<span class="val-hot">${vFlag}</span>`:''}</div><div class="sub">父 ${h.sire||'?'}〔${fTag}〕／母父 ${h.bms||'?'}</div></td>
+      <td><div class="hn">${h.name||'?'} ${nBadge} ${biasFlag} ${roteFlag} ${vFlag?`<span class="val-hot">${vFlag}</span>`:''}</div><div class="sub">父 ${h.sire||'?'}〔${fTag}〕／母父 ${h.bms||'?'}</div>${buyFactors(v,race)}</td>
       <td class="roi">${roiTxt}</td>
       <td><button class="load" data-race="${idx}" data-uma="${h.umaban}">読込</button></td>
     </tr>`;
