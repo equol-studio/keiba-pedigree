@@ -153,6 +153,9 @@
   .rec-bets{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
   .rec-bet{font-size:14px;font-weight:700;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
   .rec-bet b{color:var(--accent2);font-size:15px}
+  .rec-play-head{color:#e0b3ff;margin-top:4px}
+  .rec-play .rec-bet{background:rgba(180,120,255,.09);border-color:rgba(180,120,255,.4)}
+  .rec-play .rec-bet b{color:#d8a8ff}
   .rec-body{font-size:12px;color:var(--txt);line-height:1.6}
   .rec-body ul{margin:3px 0 6px;padding-left:18px} .rec-body li{margin-bottom:3px}
   .roi-hi{color:var(--good)} .roi-mid{color:var(--accent2)} .roi-lo{color:var(--sub)}
@@ -1019,12 +1022,41 @@ function recommendBets(race, hs, oddsRace){
   if(myaku){ const t=tanOf(myaku);
     reasons.push(`妙味 ${um(myaku)}${nm(myaku)}：${myaku.v.myakuStars}${myaku.v.biasNote?'＝'+myaku.v.biasNote.replace(/（.*/,''):''}${(myaku.v.roteBoost&&/◎/.test(myaku.v.roteBoost))?'／'+myaku.v.roteBoost.replace(/（.*/,''):''}${t?`（単${t}${t>=8?'＝人気薄で期待値大':''}）`:''}`);
   }
+  const at=tanOf(axis);
   const bets=[];
-  bets.push(`複勝 <b>${um(axis)}</b>`);
-  const wideT=[myaku, ...partners].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i && x!==axis).slice(0,2);
-  if(wideT.length) bets.push(`ワイド <b>${um(axis)}</b> - ${wideT.map(um).join('・')}`);
-  if(pUm.length>=2) bets.push(`3連複 <b>${um(axis)}</b>軸ながし → ${pUm.slice(0,4).join('・')}`);
-  return {verdict:'勝負', bets, reasons, axisUm:um(axis)};
+  // 本線の型はレース形態で可変（混戦=広く／堅軸=厚く／標準）
+  const shape = rated.length>=4 ? 'wide' : (at&&at<=3.5&&(axis.v.roi==null||axis.v.roi>=100)) ? 'tight' : 'std';
+  if(shape==='tight'){
+    bets.push(`複勝 <b>${um(axis)}</b>（厚めに）`);
+    const wt=[myaku,...partners].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i&&x!==axis).slice(0,2);
+    if(wt.length) bets.push(`ワイド <b>${um(axis)}</b> - ${wt.map(um).join('・')}`);
+  }else if(shape==='wide'){
+    bets.push(`複勝 <b>${um(axis)}</b>`);
+    const wt=[myaku,...partners].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i&&x!==axis).slice(0,3);
+    if(wt.length) bets.push(`ワイド <b>${um(axis)}</b> - ${wt.map(um).join('・')}（手広く）`);
+    if(pUm.length>=3) bets.push(`3連複 フォーメーション <b>${um(axis)}</b>-${pUm.slice(0,2).join('・')}-${pUm.slice(0,4).join('・')}`);
+    else if(pUm.length>=2) bets.push(`3連複 <b>${um(axis)}</b>軸ながし → ${pUm.slice(0,4).join('・')}`);
+  }else{
+    bets.push(`複勝 <b>${um(axis)}</b>`);
+    const wt=[myaku,...partners].filter(Boolean).filter((x,i,a)=>a.indexOf(x)===i&&x!==axis).slice(0,2);
+    if(wt.length) bets.push(`ワイド <b>${um(axis)}</b> - ${wt.map(um).join('・')}`);
+    if(pUm.length>=2) bets.push(`3連複 <b>${um(axis)}</b>軸ながし → ${pUm.slice(0,4).join('・')}`);
+  }
+  // 🎲 遊び（穴・一発）：人気薄で血統シグナルを持つ馬を主役にした高配当狙い。本線とは別トラック。
+  const play=[];
+  const darks=hs.filter(x=>{ const t=tanOf(x); return x!==axis && t && t>=6 && (x.v.myaku>=8||x.v.bias>=6||/◎/.test(x.v.roteBoost||'')||(x.v.roi!=null&&x.v.roi>=88)); });
+  const dark=darks[0];
+  if(dark){
+    const dt=tanOf(dark);
+    play.push(`ワイド <b>${um(dark)}</b> - ${um(axis)}（穴×軸で高配当）`);
+    const hmob=[axis,...partners].filter(x=>x!==dark).map(um).filter((v,i,a)=>a.indexOf(v)===i).slice(0,4);
+    if(hmob.length>=2) play.push(`3連複 <b>${um(dark)}</b>から → ${hmob.join('・')}（一発）`);
+    play.push(`単勝/複勝 <b>${um(dark)}</b>（${dt}倍・少額でロマン）`);
+  }else if(darks.length===0 && myaku && tanOf(myaku)>=4){
+    play.push(`ワイド <b>${um(myaku)}</b> - ${um(axis)}（妙味を絡めて配当UP）`);
+  }
+  const shapeNote = shape==='wide'?'混戦＝相手を広く取る形':shape==='tight'?'軸が堅い＝複勝を厚く':'標準＝軸から数点';
+  return {verdict:'勝負', bets, play, reasons, shapeNote, axisUm:um(axis)};
 }
 
 /* ---- 🏇 レース血統ビュー（自動取得データ pedigree-data.js） ---- */
@@ -1248,10 +1280,14 @@ function drawRace(){
     if(rec.verdict==='見送り'){
       recEl.innerHTML=`<div class="rec-head rec-skip">🚫 推奨：見送り</div><div class="rec-body">${rec.reasons.join('<br>')}</div>`;
     }else{
-      recEl.innerHTML=`<div class="rec-head">🎯 推奨買い目（自動）</div>`+
+      const playHtml = (rec.play&&rec.play.length)
+        ? `<div class="rec-head rec-play-head">🎲 遊び（穴・一発）</div><div class="rec-bets rec-play">${rec.play.map(b=>`<div class="rec-bet">${b}</div>`).join('')}</div>`
+        : '';
+      recEl.innerHTML=`<div class="rec-head">🎯 本線（自動）${rec.shapeNote?`<span class="sub"> — ${rec.shapeNote}</span>`:''}</div>`+
         `<div class="rec-bets">${rec.bets.map(b=>`<div class="rec-bet">${b}</div>`).join('')}</div>`+
+        playHtml+
         `<div class="rec-body"><b>根拠</b><ul>${rec.reasons.map(r=>`<li>${r}</li>`).join('')}</ul>`+
-        `<div class="sub">※血統×回収×馬場×妙味×オッズの自動サイン。的中保証ではなく期待値の目安。道悪は複勝・ワイド薄めが無難。</div></div>`;
+        `<div class="sub">※血統×回収×馬場×妙味×オッズの自動サイン。的中保証ではなく期待値の目安。本線は堅実、🎲遊びは高配当狙いの少額で。道悪は複勝・ワイド薄めが無難。</div></div>`;
     }
   }
   let html='<tr><th class="mk">印</th><th class="uma">馬番</th><th>馬名 / 父系・国系統</th><th class="roi">複勝回収</th><th></th></tr>';
