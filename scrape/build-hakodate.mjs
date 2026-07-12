@@ -114,6 +114,37 @@ async function getPastMap(raceId){
   return map;
 }
 
+// 個体実績：全競走成績(db.netkeiba.com/horse/result/{id}/ ＝静的HTML)を集計
+// rec = {n, wet(重不良), yaya(稍重), turf, dirt, right, left, hako(函館), dist:{距離:集計}}
+// 各集計 = {n:出走, w:勝利, p:3着内}
+const DIR_LEFT=['東京','中京','新潟'];
+function parseRecord(txt){
+  const m=txt.match(/<table[^>]*db_h_race_results[\s\S]*?<\/table>/);
+  if(!m) return null;
+  const trs=[...m[0].matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].slice(1);
+  const agg=()=>({n:0,w:0,p:0});
+  const rec={n:0, wet:agg(), yaya:agg(), turf:agg(), dirt:agg(), right:agg(), left:agg(), hako:agg(), dist:{}};
+  const add=(a,chaku)=>{ a.n++; if(chaku===1)a.w++; if(chaku<=3)a.p++; };
+  for(const tr of trs){
+    const tds=[...tr[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(x=>x[1].replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').trim());
+    if(tds.length<17) continue;
+    const chaku=parseInt(tds[11],10); if(!Number.isFinite(chaku)) continue;  // 中止/除外/取消はスキップ
+    const sd=(tds[14]||'').match(/(芝|ダ|障)(\d{3,4})/); if(!sd) continue;
+    const surface=sd[1], dist=sd[2];
+    const baba=(tds[16]||'').trim();          // 良/稍/重/不
+    const venue=((tds[1]||'').match(/(札幌|函館|福島|新潟|東京|中山|中京|京都|阪神|小倉)/)||[])[1]||'';
+    rec.n++;
+    if(baba==='重'||baba==='不') add(rec.wet,chaku);
+    else if(baba==='稍') add(rec.yaya,chaku);
+    if(surface==='芝') add(rec.turf,chaku); else if(surface==='ダ') add(rec.dirt,chaku);
+    if(venue) add(DIR_LEFT.includes(venue)?rec.left:rec.right,chaku);
+    if(venue==='函館') add(rec.hako,chaku);
+    if(!rec.dist[dist]) rec.dist[dist]=agg();
+    add(rec.dist[dist],chaku);
+  }
+  return rec.n?rec:null;
+}
+
 // パンダズ競馬 函館 → 種牡馬×コース×複勝回収率 を自動収集
 async function scrapePandas(){
   const t=await get('https://db-keiba.com/hakodate-stallion/');
@@ -161,9 +192,15 @@ async function main(){
           pedCache[h.horseId]={name:horseName(pt), ped:vals, sire:vals?vals[2]:'', bms:vals?vals[6]:''};
           await sleep(400);
         }catch(e){ pedCache[h.horseId]={name:'',ped:null,sire:'',bms:''}; }
+        // 個体実績（全競走成績）＝重馬場/距離/芝ダ/右左回り/函館の実績集計
+        try{
+          const rt=await get(`https://db.netkeiba.com/horse/result/${h.horseId}/`);
+          pedCache[h.horseId].rec=parseRecord(rt);
+          await sleep(300);
+        }catch(e){ pedCache[h.horseId].rec=null; }
       }
       const c=pedCache[h.horseId];
-      h.name=c.name; h.sire=c.sire; h.bms=c.bms; h.ped=c.ped;
+      h.name=c.name; h.sire=c.sire; h.bms=c.bms; h.ped=c.ped; h.rec=c.rec||null;
     }
     races.push(race);
     await sleep(300);
