@@ -24,13 +24,17 @@ async function fetchGoing(raceId){
     try{
       const t=await getText(`https://race.netkeiba.com/race/shutuba.html?race_id=${raceId}`);
       const clean=t.replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ');
-      const g=((clean.match(/馬場[:：]\s*(不良|稍\s*重|良|重)/)||[])[1]||'').replace(/\s/g,'');
+      // netkeibaの出馬表は馬場を略記1文字(不/稍/重/良)で出すため、略記＋フル両対応でフル形に正規化
+      let g=((clean.match(/馬場[:：]\s*(不良|稍\s*重|良好|良|重|不|稍)/)||[])[1]||'').replace(/\s/g,'');
+      g=({'不':'不良','稍':'稍重','良好':'良'})[g]||g;
       const w=(clean.match(/(?:天候|天気)[:：]\s*(晴|曇|雨|小雨|雪)/)||[])[1]||'';
-      if(g||w) return {going:g, weather:w};
+      const sd=clean.match(/(芝|ダ|障)\s?\d{3,4}\s?m/);   // 種別（芝/ダ）を取得＝馬場を種別で分けるため
+      const surface=sd?(sd[1]==='障'?'障':sd[1]):'';
+      if(g||w||surface) return {going:g, weather:w, surface};
     }catch(e){}
     await sleep(700);
   }
-  return {going:'',weather:''};
+  return {going:'',weather:'',surface:''};
 }
 async function fetchOdds(raceId){
   const u=`https://race.netkeiba.com/api/api_get_jra_odds.html?race_id=${raceId}&type=1&action=init`;
@@ -62,12 +66,21 @@ async function main(){
       await sleep(250);
     }catch(e){ /* skip */ }
   }
-  // 現在の函館馬場（開催全体で共通・雨で悪化）＝取得できた中で最も重い値を、空のレースに補完
+  // 現在の函館馬場を【芝/ダート別】に管理（雨で芝と砂の状態は別々に悪化する）。
+  // 取得失敗レースは同じ種別の最重値で補完＝ダートに芝の値が混ざらないようにする。
   const sev={'不良':4,'重':3,'稍重':2,'良':1};
-  const goings=Object.values(races).map(r=>r.going).filter(Boolean);
-  const cur=goings.sort((a,b)=>(sev[b]||0)-(sev[a]||0))[0]||'';
-  for(const id in races){ if(!races[id].going && cur){ races[id].going=cur; races[id].goingEst=true; } }
-  const data={ fetchedAt:new Date().toISOString(), date, currentGoing:cur, races };
+  const severest=arr=>arr.filter(Boolean).sort((a,b)=>(sev[b]||0)-(sev[a]||0))[0]||'';
+  const curTurf=severest(Object.values(races).filter(r=>r.surface==='芝').map(r=>r.going));
+  const curDirt=severest(Object.values(races).filter(r=>r.surface==='ダ').map(r=>r.going));
+  const curAll =severest(Object.values(races).map(r=>r.going));
+  for(const id in races){
+    if(!races[id].going){
+      const sfc=races[id].surface;
+      const fill = sfc==='芝'?curTurf : sfc==='ダ'?curDirt : curAll;
+      if(fill){ races[id].going=fill; races[id].goingEst=true; }
+    }
+  }
+  const data={ fetchedAt:new Date().toISOString(), date, currentGoing:curAll, currentGoingTurf:curTurf, currentGoingDirt:curDirt, races };
   writeFileSync(out, 'window.KEIBA_ODDS='+JSON.stringify(data)+';\n', 'utf8');
   console.error(`WROTE ${out} races=${Object.keys(races).length}/${ids.length} (live odds=${live})`);
 }

@@ -61,7 +61,8 @@ async function parseRace(raceId){
   const sd=rd.match(/(芝|ダ|障)\s*(\d{3,4})m/);
   const surface=sd?sd[1]:''; const dist=sd?sd[2]:'';
   const course=surface?`函館${surface==='ダ'?'ダ':surface}${dist}`:'函館';
-  const going=((rd.replace(/<[^>]+>/g,' ').match(/馬場[:：]\s*(不良|稍\s*重|良|重)/)||[])[1]||'').replace(/\s/g,'');
+  let going=((rd.replace(/<[^>]+>/g,' ').match(/馬場[:：]\s*(不良|稍\s*重|良好|良|重|不|稍)/)||[])[1]||'').replace(/\s/g,'');
+  going=({'不':'不良','稍':'稍重','良好':'良'})[going]||going;
   const rn=(t.match(/<div class="RaceName"[^>]*>([\s\S]*?)<\/div>/)||[])[1];
   const name=rn?rn.replace(/<[^>]+>/g,'').trim():'';
   const no=+raceId.slice(-2);
