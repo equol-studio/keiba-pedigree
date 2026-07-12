@@ -8,7 +8,13 @@ on:
         required: false
         default: '330'
   schedule:
-    - cron: '2 1 * * 6,0'    # UTC 土日01:02 = JST 10:02 に自動起動（バックアップ）
+    - cron: '2 1 * * 6,0'    # UTC 土日01:02 = JST 10:02（本命）
+    - cron: '32 1 * * 6,0'   # UTC 土日01:32 = JST 10:32（cron遅延/不発の保険）
+    - cron: '2 2 * * 6,0'    # UTC 土日02:02 = JST 11:02（同上）
+# 同時に複数ループが走らないよう直列化（既に稼働中なら新規起動はスキップ）
+concurrency:
+  group: odds-loop
+  cancel-in-progress: false
 jobs:
   loop:
     runs-on: ubuntu-latest

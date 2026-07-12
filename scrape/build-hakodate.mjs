@@ -75,9 +75,10 @@ async function parseRace(raceId){
     const hid=(seg.match(/db\.netkeiba\.com\/horse\/(\d{10})/)||seg.match(/\/horse\/(\d{10})/)||[])[1];
     if(!hid) continue;
     const jockey=(seg.match(/jockey\/(?:result\/recent\/)?\d+[^>]*>([^<]+)</)||[])[1]||'';
+    const jid=(seg.match(/jockey\/(?:result\/recent\/)?(\d+)/)||[])[1]||'';
     const trainer=(seg.match(/trainer\/(?:result\/recent\/)?\d+[^>]*>([^<]+)</)||[])[1]||'';
     const prev=byId.get(hid);
-    if(!prev || (prev.umaban==null && uma)) byId.set(hid,{umaban:uma?+uma:null, waku:waku?+waku:null, horseId:hid, jockey:jockey.trim(), trainer:trainer.trim()});
+    if(!prev || (prev.umaban==null && uma)) byId.set(hid,{umaban:uma?+uma:null, waku:waku?+waku:null, horseId:hid, jockey:jockey.trim(), jockeyId:jid, trainer:trainer.trim()});
   }
   const horses=[...byId.values()].sort((a,b)=>(a.umaban||99)-(b.umaban||99));
   return {raceId, no, name, course, surface, dist:+dist||null, going, horses};
@@ -145,6 +146,25 @@ function parseRecord(txt){
   return rec.n?rec:null;
 }
 
+// 騎手戦績：db.netkeiba.com/jockey/{id}/ の年度別成績(ResultsByYears)から当年の勝率/複勝率/騎乗数
+async function getJockeyStats(jid, year){
+  const t=await get(`https://db.netkeiba.com/jockey/${jid}/`);
+  const m=t.match(/<table[^>]*ResultsByYears[\s\S]*?<\/table>/);
+  if(!m) return null;
+  const trs=[...m[0].matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)];
+  const cell=tr=>[...tr.matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/g)].map(x=>x[1].replace(/<[^>]+>/g,'').replace(/,/g,'').replace(/\s+/g,' ').trim());
+  let cur=null, cum=null;
+  for(const tr of trs){
+    const c=cell(tr[1]);
+    if(c[0]===String(year)) cur=c;
+    if(c[0]==='累計') cum=c;
+  }
+  const pick=cur||cum; if(!pick) return null;
+  const pct=s=>parseFloat(String(s).replace('%',''))||0;
+  return { year:pick[0], w:+pick[2]||0, p2:+pick[3]||0, p3:+pick[4]||0, rides:+pick[6]||0,
+    winP:pct(pick[9]), renP:pct(pick[10]), fukuP:pct(pick[11]) };
+}
+
 // パンダズ競馬 函館 → 種牡馬×コース×複勝回収率 を自動収集
 async function scrapePandas(){
   const t=await get('https://db-keiba.com/hakodate-stallion/');
@@ -177,6 +197,8 @@ async function main(){
   console.error('函館 race_ids:',ids.length);
   ids=ids.slice(0,maxRaces);
   const pedCache={};
+  const jockeyCache={};
+  const year=date.slice(0,4);
   const races=[];
   for(const id of ids){
     const race=await parseRace(id);
@@ -201,6 +223,14 @@ async function main(){
       }
       const c=pedCache[h.horseId];
       h.name=c.name; h.sire=c.sire; h.bms=c.bms; h.ped=c.ped; h.rec=c.rec||null;
+      // 騎手戦績（当年の勝率/複勝率/騎乗数）＝騎手IDでキャッシュ
+      if(h.jockeyId){
+        if(!(h.jockeyId in jockeyCache)){
+          try{ jockeyCache[h.jockeyId]=await getJockeyStats(h.jockeyId, year); await sleep(250); }
+          catch(e){ jockeyCache[h.jockeyId]=null; }
+        }
+        h.jstats=jockeyCache[h.jockeyId]||null;
+      }
     }
     races.push(race);
     await sleep(300);

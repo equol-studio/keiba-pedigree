@@ -2,12 +2,18 @@ name: build-race
 # 開催日の朝に函館全レースの血統(父/母父/5代)・前走・回収率を取得してコミット。手動実行も可。
 on:
   schedule:
-    - cron: '0 22 * * 5,6'   # UTC 金/土 22:00 = JST 土/日 07:00
+    - cron: '0 22 * * 5,6'   # UTC 金/土 22:00 = JST 土/日 07:00（本命）
+    - cron: '30 22 * * 5,6'  # UTC 金/土 22:30 = JST 土/日 07:30（cron遅延/不発の保険）
+    - cron: '0 23 * * 5,6'   # UTC 金/土 23:00 = JST 土/日 08:00（同上）
   workflow_dispatch:
     inputs:
       date:
         description: 'YYYYMMDD（空欄=今日JST）'
         required: false
+# 同時実行を直列化（保険cronが重なっても二重スクレイプしない）
+concurrency:
+  group: build-race
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,6 +29,10 @@ jobs:
           DATE="${{ github.event.inputs.date }}"
           if [ -z "$DATE" ]; then DATE=$(TZ=Asia/Tokyo date +%Y%m%d); fi
           echo "DATE=$DATE" >> "$GITHUB_ENV"
+          # 保険cronが重なっても二重スクレイプしない：手動指定が無く既に当日分がある場合はスキップ
+          if [ -z "${{ github.event.inputs.date }}" ] && grep -q "\"date\":\"$DATE\"" pedigree-data.js 2>/dev/null; then
+            echo "already built for $DATE — skip scrape"; exit 0
+          fi
           node scrape/build-hakodate.mjs "$DATE"
       - name: Commit if changed
         run: |

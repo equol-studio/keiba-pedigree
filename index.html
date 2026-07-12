@@ -1236,6 +1236,13 @@ function evaluateHorse(h,race){
     }
     if(rec.hako.n>=2 && rec.hako.p/rec.hako.n>=0.5){ score+=5; basis+=`／函館巧者(${rec.hako.p}/${rec.hako.n})`; }
   }
+  // 騎手戦績（当年複勝率）：好調騎手を軽く加点／不振騎手を軽く減点
+  const js=h.jstats;
+  if(js && mark!=='－'){
+    if(js.fukuP>=25){ score+=4; basis+=`／騎手好調(複${js.fukuP}%)`; }
+    else if(js.fukuP>=20){ score+=2; }
+    else if(js.rides>=50 && js.fukuP<12){ score-=2; }
+  }
   // 妙味スコア（亀谷シグナル＝データに乗っていない旨味。印とは別トラック）
   const roteHot = roteBoost && /◎/.test(roteBoost);
   const myaku = (bias>0?bias:0) + (roteHot?8:0) + (dokan?5:0);
@@ -1265,7 +1272,7 @@ function distRec(rec,dist){
 }
 /* 買い要素を一目で（馬を押さずに）：重馬場・距離・コース・右回り/函館
    個体実績（全競走成績の集計）を優先、無い項目は血統推定(推)でフォールバック */
-function buyFactors(v,race,rec){
+function buyFactors(v,race,rec,js){
   const c=[];
   const wetRace=/稍重|重|不良/.test(race.going||'');
   // 🌧 重馬場（道悪実績＝重+不良、参考で稍重も合算）
@@ -1297,6 +1304,11 @@ function buyFactors(v,race,rec){
   }else{
     const best=(v.fApt&&v.fApt.best)||'';
     if(/小回り|函館/.test(best)) c.push('<span class="fc ok">↩小回り◎推</span>');
+  }
+  // 👤 騎手戦績（当年複勝率）
+  if(js && js.rides>=10){
+    const jt = js.fukuP>=25?'go':js.fukuP>=18?'ok':(js.rides>=50&&js.fukuP<12?'no':'dim');
+    c.push(`<span class="fc ${jt}">👤複${js.fukuP}%</span>`);
   }
   return c.length?`<div class="facs">${c.join('')}</div>`:'';
 }
@@ -1393,7 +1405,7 @@ function drawRace(){
     html+=`<tr class="main ${v.mark==='◎'||v.mark==='○'?'rv-buy':''}" data-uma="${h.umaban}">
       <td class="mk ${mkCls}">${v.mark}</td>
       <td class="uma">${h.umaban?`<span class="wb wk${h.waku||0}">${h.umaban}</span>`:''}</td>
-      <td><div class="hn">${h.name||'?'} ${nBadge} ${biasFlag} ${roteFlag} ${vFlag?`<span class="val-hot">${vFlag}</span>`:''}</div><div class="sub">父 ${h.sire||'?'}〔${fTag}〕／母父 ${h.bms||'?'}</div>${buyFactors(v,race,h.rec)}</td>
+      <td><div class="hn">${h.name||'?'} ${nBadge} ${biasFlag} ${roteFlag} ${vFlag?`<span class="val-hot">${vFlag}</span>`:''}</div><div class="sub">父 ${h.sire||'?'}〔${fTag}〕／母父 ${h.bms||'?'}</div>${buyFactors(v,race,h.rec,h.jstats)}</td>
       <td class="roi">${roiTxt}</td>
       <td><button class="load" data-race="${idx}" data-uma="${h.umaban}">読込</button></td>
     </tr>`;
@@ -1426,7 +1438,7 @@ function drawRace(){
       <div class="dg"><span class="dg-k">🎯 適性</span><span class="dg-v">${v.fApt?`${v.fApt.dist}・${race.surface}${fitTxt==='専門で合致'?'◎':fitTxt==='対応可'?'○':'△'}`:'適性データ無'} ｜ 馬場 ${v.fApt?v.gt.tag:'—'} ｜ ${horse.waku?horse.waku+'枠'+wakuPos(horse.waku):'枠?'}(${WAKU_BIAS[race.course]||'—'}) ｜ ${paceTend(v.fApt,v.fsys)} ｜ ${venueNote(horse.sire,v.fApt,v)}</span></div>
       ${horse.rec?`<div class="dg"><span class="dg-k">📊 実績</span><span class="dg-v">通算${horse.rec.n}走 ｜ 道悪 ${horse.rec.wet.n+horse.rec.yaya.n?`${horse.rec.wet.p+horse.rec.yaya.p}複/${horse.rec.wet.n+horse.rec.yaya.n}走`:'未経験'} ｜ ${race.dist?`${race.dist}m帯 ${(()=>{const d=distRec(horse.rec,race.dist);return d?`${d.p}複/${d.n}走`:'初';})()}`:''} ｜ ${race.surface} ${(()=>{const s=race.surface==='ダ'?horse.rec.dirt:horse.rec.turf;return s.n?`${s.p}複/${s.n}走`:'初';})()} ｜ 函館 ${horse.rec.hako.n?`${horse.rec.hako.p}複/${horse.rec.hako.n}走`:'初'} ｜ 右回り ${horse.rec.right.n?`${horse.rec.right.p}複/${horse.rec.right.n}走`:(horse.rec.left.n?'初(左のみ)':'—')}</span></div>`:''}
       <div class="dg"><span class="dg-k">🔄 ローテ</span><span class="dg-v">${roteTxt} ｜ 前走 ${zenNote(horse.prev)}</span></div>
-      <div class="dg"><span class="dg-k">👤 陣営</span><span class="dg-v">${horse.jockey||'—'} ／ ${horse.trainer?horse.trainer+'厩舎':'—'}</span></div>
+      <div class="dg"><span class="dg-k">👤 陣営</span><span class="dg-v">${horse.jockey||'—'}${horse.jstats?` <b>当年 勝${horse.jstats.winP}%/複${horse.jstats.fukuP}%</b> <span class="sub">(${horse.jstats.w}-${horse.jstats.p2}-${horse.jstats.p3}/${horse.jstats.rides}騎乗)</span>`:''} ／ ${horse.trainer?horse.trainer+'厩舎':'—'}</span></div>
       <div class="dg"><span class="dg-k">📈 回収率</span><span class="dg-v">${evHtml}</span></div>
     </td>`;
     tr.after(det);
