@@ -120,6 +120,16 @@
   .rvtable tr.main{cursor:pointer}
   .rvtable tr.main:hover{background:rgba(255,255,255,.03)}
   .rvtable .uma{font-weight:700;text-align:center;width:34px;font-variant-numeric:tabular-nums}
+  /* 馬番を枠色バッジに（JRA標準：1白2黒3赤4青5黄6緑7橙8桃）*/
+  .uma .wb{display:inline-block;min-width:22px;padding:2px 4px;border-radius:5px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2}
+  .wb.wk1{background:#fff;color:#111;border:1px solid #bbb}
+  .wb.wk2{background:#2b2b2b;color:#fff}
+  .wb.wk3{background:#e63329;color:#fff}
+  .wb.wk4{background:#1479d6;color:#fff}
+  .wb.wk5{background:#f4d500;color:#111}
+  .wb.wk6{background:#12a150;color:#fff}
+  .wb.wk7{background:#f08300;color:#111}
+  .wb.wk8{background:#ec6d9c;color:#111}
   .rvtable .hn{font-weight:700;white-space:nowrap;font-size:14px}
   .rvtable .sub{color:var(--sub);font-size:11px;margin-top:2px}
   .rvtable .roi{white-space:nowrap;text-align:right}
@@ -1261,7 +1271,7 @@ function drawRace(){
       : `<span class="u">— <span class="sub">${v.mark==='☆'?'血統○':v.mark==='－'?'不適':'データ無'}</span></span>`)+myakuTag+oddsTxt;
     html+=`<tr class="main ${v.mark==='◎'||v.mark==='○'?'rv-buy':''}" data-uma="${h.umaban}">
       <td class="mk ${mkCls}">${v.mark}</td>
-      <td class="uma">${h.umaban||''}</td>
+      <td class="uma">${h.umaban?`<span class="wb wk${h.waku||0}">${h.umaban}</span>`:''}</td>
       <td><div class="hn">${h.name||'?'} ${nBadge} ${biasFlag} ${roteFlag} ${vFlag?`<span class="val-hot">${vFlag}</span>`:''}</div><div class="sub">父 ${h.sire||'?'}〔${fTag}〕／母父 ${h.bms||'?'}</div></td>
       <td class="roi">${roiTxt}</td>
       <td><button class="load" data-race="${idx}" data-uma="${h.umaban}">読込</button></td>
