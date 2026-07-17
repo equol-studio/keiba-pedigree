@@ -235,6 +235,14 @@ async function main(){
     races.push(race);
     await sleep(300);
   }
+  // ガード：馬番が過半null＝枠順確定前のスクレイプ。壊れたデータを書かずに失敗させる
+  // （土曜分を金曜に作る場合は金曜11時JST(枠順確定)以降に実行すること）
+  const totU=races.reduce((n,r)=>n+r.horses.length,0);
+  const nullU=races.reduce((n,r)=>n+r.horses.filter(h=>h.umaban==null).length,0);
+  if(totU && nullU/totU>0.5){
+    console.error(`ERROR: 馬番未確定 ${nullU}/${totU}頭（枠順確定前？）— pedigree-data.js を更新せず終了`);
+    process.exit(1);
+  }
   const data={generatedAt:new Date().toISOString(), date, track:'函館', races};
   writeFileSync(out, 'window.KEIBA_PED='+JSON.stringify(data)+';\n', 'utf8');
   console.error('WROTE',out,'races',races.length);
