@@ -110,7 +110,8 @@
   .evtable .c-sire{width:22%} .evtable .c-course{width:20%} .evtable .c-period{width:14%}
   .evtable .c-num{width:9%} .evtable .c-src{width:16%} .evtable .c-del{width:6%}
   /* レース血統ビュー */
-  #raceSel,#raceSortMode{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit}
+  #raceSel,#raceSortMode,#goingScenario{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit}
+  #goingScenario{border-color:rgba(108,192,255,.5)}
   .rvtable .myaku{font-size:11px;font-weight:700;color:#c084fc;margin-top:2px;white-space:nowrap}
   .rvtable .odds{font-size:12px;font-weight:700;color:var(--txt);margin-top:2px;white-space:nowrap}
   .val-hot{font-size:10px;font-weight:700;color:#06263f;background:var(--accent2);padding:1px 6px;border-radius:99px}
@@ -227,6 +228,12 @@
           <option value="buy">総合順（実績×血統×回収）</option>
           <option value="myaku">妙味順（亀谷シグナル）</option>
           <option value="uma">馬番順</option>
+        </select>
+        <select id="goingScenario" title="馬場を仮定して予想を再計算（雨予報の備え）">
+          <option value="">馬場：ライブ</option>
+          <option value="稍重">もし稍重なら</option>
+          <option value="重">もし重なら</option>
+          <option value="不良">もし不良なら</option>
         </select>
       </div>
       <div class="legend">
@@ -1343,6 +1350,7 @@ function renderRaceView(){
     sel.innerHTML=data.races.map((r,i)=>`<option value="${i}">${r.no}R ${r.course}${r.name?' '+r.name:''}</option>`).join('');
     sel.dataset.filled='1';
     sel.onchange=drawRace; document.getElementById('raceSortMode').onchange=drawRace;
+    var gsc=document.getElementById('goingScenario'); if(gsc) gsc.onchange=drawRace;
   }
   drawRace();
 }
@@ -1354,11 +1362,15 @@ function drawRace(){
   const O=window.KEIBA_ODDS;
   const oddsRace = O&&O.races&&O.races[raceRaw.raceId] ? O.races[raceRaw.raceId] : null;
   // ライブ馬場（オッズ取得時の最新）を血統scrape時の馬場より優先
-  const liveGoing = oddsRace&&oddsRace.going ? oddsRace.going : raceRaw.going;
+  const realGoing = oddsRace&&oddsRace.going ? oddsRace.going : raceRaw.going;
+  // 馬場シナリオ：ユーザーが「もし不良なら」等を選ぶと仮定馬場で再計算（雨予報の備え）
+  const scenario=(document.getElementById('goingScenario')||{}).value||'';
+  const liveGoing = scenario || realGoing;
+  const assumed = !!scenario && scenario!==realGoing;
   const race = Object.assign({}, raceRaw, {going: liveGoing});
   const isWet = /稍重|重|不良/.test(liveGoing||'');
   const goingEst = oddsRace&&oddsRace.goingEst;
-  const goTag = liveGoing ? `｜馬場:${liveGoing}${goingEst?'(推定)':''}${isWet?' 🌧道悪':''}${oddsRace&&oddsRace.weather?'('+oddsRace.weather+')':''}` : '';
+  const goTag = liveGoing ? `｜馬場:${liveGoing}${assumed?'（⚠仮定・実際は'+(realGoing||'?')+'）':goingEst?'(推定)':''}${isWet?' 🌧道悪':''}${!assumed&&oddsRace&&oddsRace.weather?'('+oddsRace.weather+')':''}` : '';
   const oddsTime = oddsRace&&oddsRace.datetime ? `｜💴 ${oddsRace.datetime.slice(5,16)}` : (O?'｜オッズ未取得':'');
   document.getElementById('raceMeta').textContent=`${data.track||''} ${data.date||''} ${race.no}R ${race.course}${goTag}${oddsTime}`;
   // 同一馬の重複除去（馬番のある行を優先）
