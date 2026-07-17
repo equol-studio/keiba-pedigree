@@ -224,7 +224,7 @@
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
         <select id="raceSel"></select>
         <select id="raceSortMode">
-          <option value="buy">買える血統順（回収データ）</option>
+          <option value="buy">総合順（実績×血統×回収）</option>
           <option value="myaku">妙味順（亀谷シグナル）</option>
           <option value="uma">馬番順</option>
         </select>
@@ -1184,35 +1184,54 @@ function evaluateHorse(h,race){
   const fit=surfaceFit(fApt,fsys,race.surface);
   // ☆条件：父(系)の得意条件が「芝ダ＋距離」までコースに合致（データ無いが血統的に狙える）
   const dokan = fAptClose && surfaceFit(fAptClose,fsys,race.surface)==='fit' && distFit(fAptClose,race.dist);
-  let mark,score,basis;
-  if(best){
-    mark = best.roi>=100?'◎' : best.roi>=88?'○' : best.roi>=80?'▲' : '△';
-    score = 1000+best.roi;                          // 実データ馬は必ず上位
-    basis = `${best.who}血統がこのコースで${best.isFuku?'複勝':'単勝'}回収${best.roi}%（実証）`;
-  } else if(fit==='misfit'){ mark='－'; score=5; basis='血統がこのコースにミスマッチ（逆の芝ダ）'; }
-  else if(dokan){ mark='☆'; score=80; basis=`父${aptOf(h.sire)?'':'系'}の得意条件（${fAptClose.dist}）がコースにドンピシャ（回収データ無）`; }
-  else { mark='・'; score=40; basis='血統は対応域だが、際立った適性シグナル・回収データなし'; }
-  // 良・重馬場適性：道悪の日は道悪巧者を加点／良馬場向きを割引
+  // ── スコア構成（2026-07-12改訂・改善A）：個体実績を主役に。種牡馬回収データは中程度の寄与へ ──
   const gt=goingTend(fApt);
   const wet = race.going && /稍重|重|不良/.test(race.going);
-  if(wet && mark!=='－'){
-    if(gt.wet>=2){ score+=8; basis+='／道悪◎血統で馬場妙味'; }
-    else if(gt.wet<=-1){ score-=6; basis+='／良馬場向きで道悪は割引'; }
+  let mark, roiBonus=0, basis;
+  if(best){
+    mark = best.roi>=100?'◎' : best.roi>=88?'○' : best.roi>=80?'▲' : '△';
+    roiBonus = best.roi>=100?32 : best.roi>=88?24 : best.roi>=80?16 : 10;
+    basis = `${best.who}血統 このコース${best.isFuku?'複勝':'単勝'}回収${best.roi}%（実証）`;
+  } else if(fit==='misfit'){ mark='－'; roiBonus=0; basis='血統がこのコースに逆（芝ダのミスマッチ）'; }
+  else if(dokan){ mark='☆'; roiBonus=14; basis=`父${aptOf(h.sire)?'':'系'}の得意条件（${fAptClose.dist}）がコースにドンピシャ`; }
+  else { mark='・'; roiBonus=6; basis='血統は対応域（際立った回収データ無）'; }
+  let score = 50 + roiBonus;
+  // 個体実績（この馬の全成績集計）＝スコアの主役。★印(血統)に関わらず効かせる＝実績優秀馬が埋もれない
+  const rec=h.rec||null;
+  if(rec){
+    if(wet){ const wn=rec.wet.n+rec.yaya.n, wp=rec.wet.p+rec.yaya.p;
+      if(wn>=2 && wp/wn>=0.5){ score+=25; basis+=`／道悪実績◎(${wp}/${wn})`; }
+      else if(wn>=2 && wp/wn>=0.33){ score+=12; basis+=`／道悪実績○(${wp}/${wn})`; }
+      else if(wn>=3 && wp===0){ score-=18; basis+=`／道悪実績なし(0/${wn})`; }
+    }
+    const da=distRec(rec,race.dist);
+    if(da){
+      if(da.n>=2 && da.p/da.n>=0.5){ score+=20; basis+=`／距離実績◎(${da.p}/${da.n})`; }
+      else if(da.n>=2 && da.p/da.n>=0.33){ score+=10; basis+=`／距離実績○(${da.p}/${da.n})`; }
+      else if(da.n>=3 && da.p===0){ score-=12; basis+=`／距離実績なし(0/${da.n})`; }
+    }
+    const sfc=race.surface==='ダ'?rec.dirt:rec.turf;
+    if(sfc){ if(sfc.n>=3 && sfc.p/sfc.n>=0.4){ score+=10; }
+      else if(sfc.n>=4 && sfc.p===0){ score-=12; basis+=`／${race.surface}実績なし(0/${sfc.n})`; } }
+    if(rec.hako.n>=2 && rec.hako.p/rec.hako.n>=0.5){ score+=15; basis+=`／函館巧者(${rec.hako.p}/${rec.hako.n})`; }
   }
-  // 亀谷式 ローテ×国系統：短縮×米国型／延長×欧州型が浮上
+  // 血統シグナル（道悪血統/バイアス/ローテ）＝実績を補う小さめのnudge。血統ミスマッチ(－)には血統加点しない
+  if(wet && mark!=='－'){
+    if(gt.wet>=2){ score+=6; basis+='／道悪◎血統'; }
+    else if(gt.wet<=-1){ score-=5; basis+='／良馬場向きで道悪割引'; }
+  }
   const nation=nationOf(h.sire,fsys);
   let roteBoost=null;
   if(h.prev && h.prev.dist && race.dist && nation && mark!=='－'){
     const d=race.dist-h.prev.dist;
-    if(d<0 && nation==='米'){ score+=10; roteBoost='短縮×米国型 ◎（スピード活きる）'; }
-    else if(d>0 && nation==='欧'){ score+=10; roteBoost='延長×欧州型 ◎（スタミナ活きる）'; }
-    else if(d<0 && nation==='欧'){ score-=5; roteBoost='短縮×欧州型 ◁（忙しい）'; }
-    else if(d>0 && nation==='米'){ score-=5; roteBoost='延長×米国型 ◁（分が悪い）'; }
+    if(d<0 && nation==='米'){ score+=8; roteBoost='短縮×米国型 ◎（スピード活きる）'; }
+    else if(d>0 && nation==='欧'){ score+=8; roteBoost='延長×欧州型 ◎（スタミナ活きる）'; }
+    else if(d<0 && nation==='欧'){ score-=4; roteBoost='短縮×欧州型 ◁（忙しい）'; }
+    else if(d>0 && nation==='米'){ score-=4; roteBoost='延長×米国型 ◁（分が悪い）'; }
     else if(d<0 && nation==='日'){ roteBoost='短縮×日本型 ○（対応可）'; }
     else if(d>0 && nation==='日'){ roteBoost='延長×日本型 ○（対応可）'; }
     if(roteBoost && /◎/.test(roteBoost)) basis+='／'+roteBoost;
   }
-  // 亀谷 ブラッドバイアス：函館=洋芝はパワー要求(欧州型/Tサンデー/ナスルーラ有利)、ダートは米国型有利
   const subsys=subSysOf(h.sire,fsys);
   let bias=0, biasNote='';
   if(mark!=='－'){
@@ -1228,24 +1247,8 @@ function evaluateHorse(h,race){
     score+=bias;
     if(bias>=8) basis+='／'+biasNote;
   }
-  // 個体実績（全競走成績の集計）：血統推定より強いシグナルとして加点/減点
-  const rec=h.rec||null;
-  if(rec && mark!=='－'){
-    if(wet){
-      const wn=rec.wet.n+rec.yaya.n, wp=rec.wet.p+rec.yaya.p;
-      if(wn>=2 && wp/wn>=0.5){ score+=8; basis+=`／道悪実績◎(${wp}/${wn})`; }
-      else if(wn>=3 && wp===0){ score-=8; basis+=`／道悪実績なし(0/${wn})`; }
-    }
-    const da=distRec(rec,race.dist);
-    if(da){
-      if(da.n>=2 && da.p/da.n>=0.5){ score+=5; basis+=`／距離実績◎(${da.p}/${da.n})`; }
-      else if(da.n>=3 && da.p===0){ score-=5; basis+=`／距離実績なし(0/${da.n})`; }
-    }
-    if(rec.hako.n>=2 && rec.hako.p/rec.hako.n>=0.5){ score+=5; basis+=`／函館巧者(${rec.hako.p}/${rec.hako.n})`; }
-  }
-  // 騎手戦績（当年複勝率）：好調騎手を軽く加点／不振騎手を軽く減点
   const js=h.jstats;
-  if(js && mark!=='－'){
+  if(js){
     if(js.fukuP>=25){ score+=4; basis+=`／騎手好調(複${js.fukuP}%)`; }
     else if(js.fukuP>=20){ score+=2; }
     else if(js.rides>=50 && js.fukuP<12){ score-=2; }
