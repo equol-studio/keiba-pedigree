@@ -12,9 +12,12 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{
-    --bg:#0f1216; --panel:#171c22; --panel2:#1e252d; --line:#2a333d;
-    --txt:#e6edf3; --sub:#8b98a5; --accent:#6cc0ff; --accent2:#ffd166;
+    --bg:#0b0e12; --panel:#151a21; --panel2:#1c232c; --line:#2a333d;
+    --txt:#e8eef4; --sub:#8b98a5; --accent:#6cc0ff; --accent2:#ffd166;
     --good:#4ade80; --warn:#fbbf24; --hot:#fb7185;
+    --r-lg:16px; --r-md:12px; --r-sm:9px;
+    --elev:0 1px 2px rgba(0,0,0,.5), 0 6px 20px rgba(0,0,0,.28);
+    --num:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--txt);
@@ -116,6 +119,57 @@
   .rvtable .odds{font-size:12px;font-weight:700;color:var(--txt);margin-top:2px;white-space:nowrap}
   .val-hot{font-size:10px;font-weight:700;color:#06263f;background:var(--accent2);padding:1px 6px;border-radius:99px}
   .rvtable{width:100%;border-collapse:collapse;font-size:13px}
+  /* ===== v39 UI刷新：iPhone基準の1画面ダッシュボード ===== */
+  .racebar{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:var(--r-md);padding:7px 8px;margin-bottom:10px}
+  .rb-nav{flex:0 0 auto;width:44px;height:44px;padding:0;border-radius:11px;font-size:20px;line-height:1;
+    background:var(--panel);border:1px solid var(--line);color:var(--txt)}
+  .rb-nav:disabled{opacity:.3}
+  .rb-mid{flex:1;min-width:0}
+  .rb-r{font-size:19px;font-weight:800;letter-spacing:.02em;font-family:var(--num)}
+  .rb-course{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rb-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+  .chip{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(255,255,255,.06);
+    color:var(--sub);border:1px solid var(--line);white-space:nowrap}
+  .chip.wet{background:rgba(108,192,255,.14);color:var(--accent);border-color:rgba(108,192,255,.35)}
+  .chip.live{background:rgba(74,222,128,.12);color:var(--good);border-color:rgba(74,222,128,.3)}
+  .chip.stale{background:rgba(251,191,36,.12);color:var(--warn);border-color:rgba(251,191,36,.3)}
+  /* 要点3カード */
+  .dash{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+  .dcard{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-md);padding:9px 8px;
+    min-width:0;box-shadow:var(--elev)}
+  .dcard.axis{border-color:rgba(108,192,255,.45);background:linear-gradient(180deg,rgba(108,192,255,.10),rgba(108,192,255,.02))}
+  .dcard.myaku{border-color:rgba(255,209,102,.4)}
+  .dcard.dark{border-color:rgba(251,113,133,.35)}
+  .dc-lab{font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--sub);margin-bottom:4px}
+  .dcard.axis .dc-lab{color:var(--accent)}
+  .dcard.myaku .dc-lab{color:var(--accent2)}
+  .dcard.dark .dc-lab{color:var(--hot)}
+  .dc-num{font-size:23px;font-weight:800;line-height:1.05;font-family:var(--num)}
+  .dc-name{font-size:11px;line-height:1.3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dc-meta{font-size:11px;color:var(--sub);margin-top:4px;font-family:var(--num)}
+  .dc-empty{font-size:11px;color:var(--sub);padding:6px 0}
+  /* 判定バー */
+  .verdict{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r-md);margin-bottom:10px;
+    font-size:13px;font-weight:700}
+  .verdict.go{background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);color:var(--good)}
+  .verdict.skip{background:rgba(139,152,165,.1);border:1px solid var(--line);color:var(--sub)}
+  .verdict .vsub{font-weight:400;font-size:11.5px;color:var(--sub)}
+  /* 圧縮サマリー行 */
+  .sumline{display:flex;gap:7px;align-items:flex-start;font-size:12px;padding:7px 10px;background:var(--panel2);
+    border:1px solid var(--line);border-radius:var(--r-sm);margin-bottom:7px;line-height:1.5}
+  .sumline .k{flex:0 0 auto;font-size:10px;font-weight:800;color:var(--sub);padding-top:2px}
+  .sumline .v{min-width:0;word-break:break-word}
+  .sumline b{font-family:var(--num)}
+  /* 折りたたみ */
+  details.fold{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:9px;overflow:hidden}
+  details.fold>summary{list-style:none;cursor:pointer;padding:11px 12px;font-size:13px;font-weight:700;
+    display:flex;align-items:center;gap:7px}
+  details.fold>summary::-webkit-details-marker{display:none}
+  details.fold>summary::after{content:'▾';margin-left:auto;color:var(--sub);font-size:12px;transition:transform .18s}
+  details.fold[open]>summary::after{transform:rotate(180deg)}
+  details.fold>summary .cnt{font-size:11px;font-weight:400;color:var(--sub)}
+  .fold-body{padding:0 12px 12px}
   .stake-table td,.stake-table th{padding:5px 7px;border-bottom:1px solid rgba(255,255,255,.08)}
   .stake-table .num{text-align:right;font-variant-numeric:tabular-nums}
   .stake-total td{font-weight:700;border-top:1px solid rgba(255,255,255,.25);border-bottom:none}
@@ -225,29 +279,66 @@
   <!-- ===== レース ===== -->
   <section class="panel active" data-panel="race">
     <div class="card" id="raceCard" hidden>
-      <h2>🏇 レース血統ビュー<span class="seed" id="raceMeta"></span></h2>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-        <select id="raceSel"></select>
-        <select id="raceSortMode">
-          <option value="buy">総合順（実績×血統×回収）</option>
-          <option value="myaku">妙味順（亀谷シグナル）</option>
-          <option value="uma">馬番順</option>
-        </select>
-        <select id="goingScenario" title="馬場を仮定して予想を再計算（雨予報の備え）">
-          <option value="">馬場：ライブ</option>
-          <option value="稍重">もし稍重なら</option>
-          <option value="重">もし重なら</option>
-          <option value="不良">もし不良なら</option>
-        </select>
+      <!-- レース切替バー（前後ボタン＋コース・馬場・オッズ鮮度） -->
+      <div class="racebar">
+        <button class="rb-nav" id="rbPrev" aria-label="前のレース">‹</button>
+        <div class="rb-mid">
+          <div><span class="rb-r" id="rbR">-</span> <span class="rb-course" id="rbCourse"></span></div>
+          <div class="rb-chips" id="rbChips"></div>
+        </div>
+        <button class="rb-nav" id="rbNext" aria-label="次のレース">›</button>
       </div>
-      <div class="legend">
-        <span><b class="roi-hi">◎</b>複勝≥100</span><span><b class="roi-mid">○</b>≥88</span><span><b class="m-blue">▲</b>≥80</span><span><b class="roi-lo">△</b>実証&lt;80</span><span><b class="m-star">☆</b>父系がコースにドンピシャ(データ無)</span><span><b class="roi-lo">・</b>対応域</span><span><b class="roi-lo">－</b>不適</span>
-      </div>
-      <div class="pace" id="racePace"></div>
-      <div class="rec" id="raceRec"></div>
-      <div class="rec" id="raceStake"></div>
-      <div class="scroll"><div class="scroll-inner" style="min-width:560px"><table class="rvtable" id="raceView"></table></div></div>
-      <p class="muted" style="margin:8px 0 0">◎○△▲＝このコースの<b>複勝回収率</b>エビデンス一致。行タップで父系ラインを展開、「読込」で5代クロス診断へ。データ更新は <code>scrape/build-hakodate.mjs</code>。</p>
+      <select id="raceSel" hidden></select>
+
+      <!-- 1画面ダッシュボード：判定→要点3カード→買い目/配分の要約 -->
+      <div id="raceVerdict"></div>
+      <div class="dash" id="raceDash"></div>
+      <div id="raceSummary"></div>
+
+      <details class="fold" id="foldRec">
+        <summary>🎯 買い目の詳細と根拠</summary>
+        <div class="fold-body">
+          <div class="rec" id="raceRec"></div>
+        </div>
+      </details>
+
+      <details class="fold" id="foldStake">
+        <summary>💰 資金配分</summary>
+        <div class="fold-body">
+          <div class="rec" id="raceStake"></div>
+        </div>
+      </details>
+
+      <details class="fold" id="foldHorses" open>
+        <summary>🐎 出走馬 <span class="cnt" id="foldHorsesCnt"></span></summary>
+        <div class="fold-body">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:9px;flex-wrap:wrap">
+            <select id="raceSortMode">
+              <option value="buy">総合順（実績×血統×回収）</option>
+              <option value="myaku">妙味順（亀谷シグナル）</option>
+              <option value="uma">馬番順</option>
+            </select>
+            <select id="goingScenario" title="馬場を仮定して予想を再計算（雨予報の備え）">
+              <option value="">馬場：ライブ</option>
+              <option value="稍重">もし稍重なら</option>
+              <option value="重">もし重なら</option>
+              <option value="不良">もし不良なら</option>
+            </select>
+          </div>
+          <div class="scroll"><div class="scroll-inner" style="min-width:560px"><table class="rvtable" id="raceView"></table></div></div>
+          <div class="legend" style="margin-top:9px">
+            <span><b class="roi-hi">◎</b>複勝≥100</span><span><b class="roi-mid">○</b>≥88</span><span><b class="m-blue">▲</b>≥80</span><span><b class="roi-lo">△</b>実証&lt;80</span><span><b class="m-star">☆</b>父系がコースにドンピシャ(データ無)</span><span><b class="roi-lo">・</b>対応域</span><span><b class="roi-lo">－</b>不適</span>
+          </div>
+        </div>
+      </details>
+
+      <details class="fold" id="foldPace">
+        <summary>🏁 ペース・バイアス</summary>
+        <div class="fold-body"><div class="pace" id="racePace"></div></div>
+      </details>
+
+      <span class="seed" id="raceMeta" hidden></span>
+      <p class="muted" style="margin:8px 0 0">行タップで父系ラインを展開、「読込」で5代クロス診断へ。データ更新は <code>scrape/build-hakodate.mjs</code>。</p>
     </div>
     <p class="muted" id="raceEmpty" style="text-align:center;padding:24px" hidden>レースデータ未取得です。<code>node scrape/build-hakodate.mjs YYYYMMDD</code> を実行すると函館全レースがここに並びます。</p>
   </section>
@@ -1445,6 +1536,77 @@ function showTab(name){
 }
 document.querySelectorAll('#tabs .tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 
+/* ---- v39 ダッシュボード：レースバー／要点3カード／要約行 ---- */
+function renderRaceBar(race, oddsRace, liveGoing, assumed, realGoing, goingEst){
+  const data=window.KEIBA_PED;
+  const sel=document.getElementById('raceSel');
+  const idx=+sel.value||0, last=data.races.length-1;
+  const rEl=document.getElementById('rbR'), cEl=document.getElementById('rbCourse'), chEl=document.getElementById('rbChips');
+  if(rEl) rEl.textContent=race.no+'R';
+  if(cEl) cEl.textContent=race.course+(race.name?' '+race.name:'');
+  const chips=[];
+  if(liveGoing){
+    const wet=/稍重|重|不良/.test(liveGoing);
+    chips.push(`<span class="chip ${wet?'wet':''}">${wet?'🌧':''}馬場 ${liveGoing}${assumed?'（仮定）':goingEst?'(推定)':''}</span>`);
+  }
+  if(assumed) chips.push(`<span class="chip stale">⚠実際は${realGoing||'?'}</span>`);
+  if(oddsRace&&oddsRace.datetime){
+    const t=oddsRace.datetime.slice(11,16);
+    const age=(Date.now()-new Date(oddsRace.datetime.replace(' ','T')).getTime())/60000;
+    chips.push(`<span class="chip ${age<40?'live':'stale'}">💴 ${t}${age>=40?' (古い)':''}</span>`);
+  }else{
+    chips.push(`<span class="chip stale">💴 オッズ未取得</span>`);
+  }
+  if(chEl) chEl.innerHTML=chips.join('');
+  const p=document.getElementById('rbPrev'), n=document.getElementById('rbNext');
+  if(p){ p.disabled=idx<=0; p.onclick=()=>{ sel.value=String(Math.max(0,idx-1)); drawRace(); }; }
+  if(n){ n.disabled=idx>=last; n.onclick=()=>{ sel.value=String(Math.min(last,idx+1)); drawRace(); }; }
+}
+function renderDash(hs, oddsRace, rec){
+  const vEl=document.getElementById('raceVerdict'), dEl=document.getElementById('raceDash');
+  if(!vEl||!dEl) return;
+  const tanOf=u=>{ const o=oddsRace&&oddsRace.horses&&oddsRace.horses[u]; return o?parseFloat(o.tan)||null:null; };
+  if(!rec || rec.verdict==='見送り'){
+    vEl.innerHTML=`<div class="verdict skip">🚫 見送り <span class="vsub">${rec&&rec.reasons?rec.reasons[0]:'シグナル不足'}</span></div>`;
+    dEl.innerHTML='';
+    return;
+  }
+  vEl.innerHTML=`<div class="verdict go">⚔️ 勝負 <span class="vsub">${rec.shapeNote||''}</span></div>`;
+  const axis=hs[0];
+  const myaku=hs.slice(1).find(x=>x.v.myaku>=10)||hs.slice(1).find(x=>x.v.myaku>=8)||null;
+  /* 穴は「妙味カードと別の馬」を出す（同じ馬が2枚並ぶと情報量が減るため） */
+  const darkOk=x=>{ const t=tanOf(x.h.umaban); return x!==axis && t && t>=6 &&
+    (x.v.myaku>=8||x.v.bias>=6||/◎/.test(x.v.roteBoost||'')||(x.v.roi!=null&&x.v.roi>=88)); };
+  const dark=hs.find(x=>x!==myaku&&darkOk(x)) || (myaku&&darkOk(myaku)?null:hs.find(darkOk)) || null;
+  const card=(cls,lab,x,meta)=> x
+    ? `<div class="dcard ${cls}"><div class="dc-lab">${lab}</div><div class="dc-num">${x.h.umaban}</div>`+
+      `<div class="dc-name">${x.h.name}</div><div class="dc-meta">${meta}</div></div>`
+    : `<div class="dcard ${cls}"><div class="dc-lab">${lab}</div><div class="dc-empty">該当なし</div></div>`;
+  const at=tanOf(axis.h.umaban);
+  dEl.innerHTML=
+    card('axis','軸',axis, (axis.v.mark!=='・'?axis.v.mark+' ':'')+(at?at+'倍':'—')) +
+    card('myaku','妙味',myaku, myaku?(myaku.v.myakuStars||'★')+' '+((t=>t?t+'倍':'')(tanOf(myaku&&myaku.h.umaban))):'') +
+    card('dark','穴',dark, dark?((t=>t?t+'倍':'')(tanOf(dark.h.umaban))):'');
+}
+function renderSummary(hs, oddsRace, rec){
+  const el=document.getElementById('raceSummary');
+  if(!el) return;
+  if(!rec||rec.verdict==='見送り'){ el.innerHTML=''; return; }
+  const strip=s=>String(s).replace(/<b>(\d+)<\/b>/g,'<b>$1</b>');
+  const lines=[];
+  if(rec.bets&&rec.bets.length)
+    lines.push(`<div class="sumline"><span class="k">本線</span><span class="v">${rec.bets.map(strip).join(' ／ ')}</span></div>`);
+  if(rec.play&&rec.play.length)
+    lines.push(`<div class="sumline"><span class="k">遊び</span><span class="v">${rec.play.map(strip).join(' ／ ')}</span></div>`);
+  const plan=stakePlan(hs, oddsRace, rec);
+  if(plan){
+    const tot=plan.rows.reduce((a,r)=>a+(r.tanStake||0),0);
+    const top=plan.rows.slice(0,2).map(r=>`${r.u}=<b>${(r.tanStake||0).toLocaleString()}</b>円`).join('・');
+    lines.push(`<div class="sumline"><span class="k">配分</span><span class="v">単勝 ${top}${plan.rows.length>2?' 他':''}（計<b>${tot.toLocaleString()}</b>円／軍資金${plan.cfg.bankroll.toLocaleString()}円）</span></div>`);
+  }
+  el.innerHTML=lines.join('');
+}
+
 function renderRaceView(){
   const data=window.KEIBA_PED;
   const card=document.getElementById('raceCard');
@@ -1517,7 +1679,12 @@ function drawRace(){
         `<div class="sub">※血統×回収×馬場×妙味×オッズの自動サイン。的中保証ではなく期待値の目安。本線は堅実、🎲遊びは高配当狙いの少額で。道悪は複勝・ワイド薄めが無難。</div></div>`;
     }
     renderStake(sorted, oddsRace, rec);
+    renderDash(sorted, oddsRace, rec);
+    renderSummary(sorted, oddsRace, rec);
   }
+  renderRaceBar(race, oddsRace, liveGoing, assumed, realGoing, goingEst);
+  const cntEl=document.getElementById('foldHorsesCnt');
+  if(cntEl) cntEl.textContent=horses.length+'頭';
   let html='<tr><th class="mk">印</th><th class="uma">馬番</th><th>馬名 / 父系・国系統</th><th class="roi">複勝回収</th><th></th></tr>';
   horses.forEach(({h,v})=>{
     const mkCls=MARK_CLS[v.mark]||'roi-lo';
