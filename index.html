@@ -116,6 +116,10 @@
   .rvtable .odds{font-size:12px;font-weight:700;color:var(--txt);margin-top:2px;white-space:nowrap}
   .val-hot{font-size:10px;font-weight:700;color:#06263f;background:var(--accent2);padding:1px 6px;border-radius:99px}
   .rvtable{width:100%;border-collapse:collapse;font-size:13px}
+  .stake-table td,.stake-table th{padding:5px 7px;border-bottom:1px solid rgba(255,255,255,.08)}
+  .stake-table .num{text-align:right;font-variant-numeric:tabular-nums}
+  .stake-total td{font-weight:700;border-top:1px solid rgba(255,255,255,.25);border-bottom:none}
+  #raceStake input{background:#12161d;color:inherit;border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:3px 6px;font-size:13px}
   .rvtable th{font-size:10px;color:var(--sub);text-align:left;padding:6px 7px;border-bottom:1px solid var(--line);white-space:nowrap}
   .rvtable td{padding:9px 7px;border-bottom:1px solid var(--line);vertical-align:middle}
   .rvtable tr.main{cursor:pointer}
@@ -241,6 +245,7 @@
       </div>
       <div class="pace" id="racePace"></div>
       <div class="rec" id="raceRec"></div>
+      <div class="rec" id="raceStake"></div>
       <div class="scroll"><div class="scroll-inner" style="min-width:560px"><table class="rvtable" id="raceView"></table></div></div>
       <p class="muted" style="margin:8px 0 0">◎○△▲＝このコースの<b>複勝回収率</b>エビデンス一致。行タップで父系ラインを展開、「読込」で5代クロス診断へ。データ更新は <code>scrape/build-hakodate.mjs</code>。</p>
     </div>
@@ -1091,6 +1096,105 @@ function recommendBets(race, hs, oddsRace){
   return {verdict:'勝負', bets, play, reasons, shapeNote, axisUm:um(axis)};
 }
 
+/* ---- 💰 資金配分（卍式＝オッズ反比例。的中時の払戻が一定になるよう張る） ----
+   購入額 = 軍資金 × 配分率 ÷ オッズ（100円単位・最低100円）
+   ねらいは「1本の高配当に成績が支配されるのを防ぐ」こと。
+   ※配分は期待値を変えない（エッジが無ければどう張っても控除率分だけ負ける）。
+     あくまでブレを均す道具であり、勝てるようにする道具ではない。 */
+const STAKE_KEY='pedStakeCfg';
+function stakeCfg(){
+  let c={bankroll:10000, rate:8};
+  try{ const s=JSON.parse(localStorage.getItem(STAKE_KEY)||'null'); if(s) c=Object.assign(c,s); }catch(e){}
+  return c;
+}
+function saveStakeCfg(c){ try{ localStorage.setItem(STAKE_KEY, JSON.stringify(c)); }catch(e){} }
+/* オッズ反比例で100円単位に丸める（最低100円） */
+function stakeFor(odds, bankroll, rate){
+  const o=parseFloat(odds);
+  if(!o||o<=0) return null;
+  const raw = bankroll * (rate/100) / o;
+  return Math.max(100, Math.round(raw/100)*100);
+}
+/* 100円単位の下限に張り付くと「均等買い」に退化する＝卍式が効かない。
+   その判定と、効かせるのに必要な軍資金を返す。 */
+function stakeFloorCheck(oddsList, bankroll, rate){
+  const valid=oddsList.map(parseFloat).filter(o=>o>0);
+  if(!valid.length) return null;
+  const floored=valid.filter(o=> bankroll*(rate/100)/o < 150 );
+  const maxOdds=Math.max(...valid);
+  const need=Math.ceil(maxOdds*150/(rate/100)/1000)*1000;
+  return {floored:floored.length, total:valid.length, need};
+}
+/* 推奨買い目に名前の挙がった馬について、単勝/複勝の配分を出す */
+function stakePlan(hs, oddsRace, rec){
+  if(!rec||rec.verdict!=='勝負'||!oddsRace||!oddsRace.horses) return null;
+  const cfg=stakeCfg();
+  const nums=[];
+  const grab=(arr,tag)=>(arr||[]).forEach(s=>{
+    const m=String(s).match(/<b>(\d+)<\/b>/);
+    if(m && !nums.some(n=>n.u===+m[1])) nums.push({u:+m[1], tag});
+  });
+  if(rec.axisUm) nums.push({u:rec.axisUm, tag:'軸'});
+  grab(rec.bets,'本線');
+  grab(rec.play,'遊び');
+  const rows=nums.map(n=>{
+    const h=hs.find(x=>x.h.umaban===n.u);
+    const o=oddsRace.horses[n.u];
+    if(!o) return null;
+    const tan=parseFloat(o.tan)||null;
+    const fLo=parseFloat(o.fukuLo)||null;
+    return {u:n.u, tag:n.tag, name:h?h.h.name:'', tan:tan, fukuLo:fLo,
+      tanStake:tan?stakeFor(tan,cfg.bankroll,cfg.rate):null,
+      fukuStake:fLo?stakeFor(fLo,cfg.bankroll,cfg.rate):null};
+  }).filter(Boolean);
+  if(!rows.length) return null;
+  return {cfg, rows};
+}
+function renderStake(hs, oddsRace, rec){
+  const el=document.getElementById('raceStake');
+  if(!el) return;
+  const plan=stakePlan(hs, oddsRace, rec);
+  const cfg=stakeCfg();
+  const ctrl=`<div class="rec-head">💰 資金配分（卍式・オッズ反比例）</div>
+    <div class="rec-body" style="padding-bottom:2px">
+      <label>軍資金 <input id="stakeBank" type="number" min="1000" step="1000" value="${cfg.bankroll}" style="width:8em"> 円</label>
+      　<label>配分率 <input id="stakeRate" type="number" min="1" max="20" step="1" value="${cfg.rate}" style="width:4em"> %</label>
+      <div class="sub">的中1本あたりの払戻が<b>約${Math.round(cfg.bankroll*cfg.rate/100).toLocaleString()}円</b>で揃うように、オッズの逆数で張る配分です。</div>
+    </div>`;
+  if(!plan){
+    el.innerHTML=ctrl+`<div class="rec-body"><div class="sub">このレースは推奨が無い（見送り）か、オッズ未取得のため配分を計算できません。</div></div>`;
+  }else{
+    const rowHtml=plan.rows.map(r=>
+      `<tr><td>${r.tag}</td><td><b>${r.u}</b> ${r.name}</td>`+
+      `<td class="num">${r.tan?r.tan+'倍':'—'}</td><td class="num">${r.tanStake?r.tanStake.toLocaleString()+'円':'—'}</td>`+
+      `<td class="num">${r.fukuLo?r.fukuLo+'倍〜':'—'}</td><td class="num">${r.fukuStake?r.fukuStake.toLocaleString()+'円':'—'}</td></tr>`).join('');
+    const totalTan=plan.rows.reduce((a,r)=>a+(r.tanStake||0),0);
+    const totalFuku=plan.rows.reduce((a,r)=>a+(r.fukuStake||0),0);
+    el.innerHTML=ctrl+
+      `<div class="scroll"><div class="scroll-inner" style="min-width:460px">
+       <table class="rvtable stake-table">
+       <tr><th>枠</th><th>馬</th><th class="num">単オッズ</th><th class="num">単勝</th><th class="num">複オッズ</th><th class="num">複勝</th></tr>
+       ${rowHtml}
+       <tr class="stake-total"><td colspan="3">合計</td><td class="num">${totalTan.toLocaleString()}円</td><td></td><td class="num">${totalFuku.toLocaleString()}円</td></tr>
+       </table></div></div>`+
+      (function(){
+        const fc=stakeFloorCheck(plan.rows.map(r=>r.tan), plan.cfg.bankroll, plan.cfg.rate);
+        if(fc && fc.floored>0){
+          return `<div class="rec-body"><div class="sub" style="color:#ffb454">⚠ ${fc.floored}/${fc.total}点が最低100円に張り付いています＝<b>実質「均等買い」に退化</b>し、オッズ反比例の意味がありません。この配分を効かせるには軍資金 <b>${fc.need.toLocaleString()}円</b>以上（または配分率を上げる）が必要です。少額で回すなら、無理に卍式にせず均等100円のままで構いません。</div></div>`;
+        }
+        return '';
+      })()+
+      `<div class="rec-body"><div class="sub">⚠ <b>配分は期待値を変えません。</b>エッジが無ければどう張っても控除率（単複20%）の分だけ負けます。これは1本の高配当に成績が振り回されるのを防ぎ、検証の精度を上げるための道具です。単勝と複勝は<b>どちらか一方</b>を選んで使ってください（両方買うと配分が二重になります）。複勝は下限オッズで計算＝辛めの見積りです。</div></div>`;
+  }
+  const bank=document.getElementById('stakeBank'), rate=document.getElementById('stakeRate');
+  const upd=()=>{
+    const c={bankroll:Math.max(1000,+bank.value||10000), rate:Math.min(20,Math.max(1,+rate.value||8))};
+    saveStakeCfg(c); drawRace();
+  };
+  if(bank) bank.addEventListener('change',upd);
+  if(rate) rate.addEventListener('change',upd);
+}
+
 /* ---- 🏇 レース血統ビュー（自動取得データ pedigree-data.js） ---- */
 function evForCourse(name,course){
   return evidence.filter(r=>norm(r.sire)===norm(name) && r.course===course && (r.fuku||r.tan));
@@ -1412,6 +1516,7 @@ function drawRace(){
         `<div class="rec-body"><b>根拠</b><ul>${rec.reasons.map(r=>`<li>${r}</li>`).join('')}</ul>`+
         `<div class="sub">※血統×回収×馬場×妙味×オッズの自動サイン。的中保証ではなく期待値の目安。本線は堅実、🎲遊びは高配当狙いの少額で。道悪は複勝・ワイド薄めが無難。</div></div>`;
     }
+    renderStake(sorted, oddsRace, rec);
   }
   let html='<tr><th class="mk">印</th><th class="uma">馬番</th><th>馬名 / 父系・国系統</th><th class="roi">複勝回収</th><th></th></tr>';
   horses.forEach(({h,v})=>{
