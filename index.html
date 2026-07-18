@@ -424,7 +424,9 @@ Object.assign(SYSTEM_MAP,{
   // 外国産・新種牡馬（函館データで「系統?」だったもの）
   マテラスカイ:'mrp',ニューイヤーズデイ:'mrp',PioneeroftheNile:'mrp',アイルハヴアナザー:'mrp',
   Frosted:'nasrullah',マジェスティックウォリアー:'nasrullah',モズアスコット:'nd',
-  Mehmas:'nd',Anjaal:'nd',フィレンツェファイア:'nasrullah'
+  Mehmas:'nd',Anjaal:'nd',フィレンツェファイア:'nasrullah',
+  // マインドユアビスケッツ系（Posse→Silver Deputy→Deputy Minister→Vice Regent＝ND系ヴァイスリージェント系/米国型）
+  マインドユアビスケッツ:'nd',DeputyMinister:'nd',SilverDeputy:'nd',Posse:'nd'
 });
 let sysOverrides={};   // ユーザー追加分（localStorage）
 function sysOf(name){
@@ -542,6 +544,7 @@ const NATION_CLS={'日':'n-jp','米':'n-us','欧':'n-eu'};
 const NATION_SYS={ mrp:'米', native:'米', nasrullah:'米', nd:'欧', roberto:'欧', sunday:'日', kinkame:'日' };
 const NATION_SIRE={
   // 米国型（ダート・スピード）
+  マインドユアビスケッツ:'米',DeputyMinister:'米',SilverDeputy:'米',Posse:'米',
   クロフネ:'米',ヘニーヒューズ:'米',ドレフォン:'米',ゴールドアリュール:'米',シニスターミニスター:'米',
   ホッコータルマエ:'米',パイロ:'米',マジェスティックウォリアー:'米',シニスター:'米',
   マテラスカイ:'米',ニューイヤーズデイ:'米',PioneeroftheNile:'米',アイルハヴアナザー:'米',
@@ -584,6 +587,7 @@ const SUBSYS_SIRE={
   サドラーズウェルズ:'nd_sadler',モズアスコット:'nd_sadler',サトノクラウン:'nd_sadler',
   ドレフォン:'nd_storm',ヘニーヒューズ:'nd_storm',
   クロフネ:'nd_vice',ヴァイスリージェント:'nd_vice',ヴァイスリーガル:'nd_vice',
+  マインドユアビスケッツ:'nd_vice',DeputyMinister:'nd_vice',SilverDeputy:'nd_vice',Posse:'nd_vice',
   リファール:'nd_lyphard',ニジンスキー:'nd_nijinsky',ヌレイエフ:'nd_nureyev',
   // ── ロベルト系 ──
   モーリス:'rob_grass',スクリーンヒーロー:'rob_grass',グラスワンダー:'rob_grass',
