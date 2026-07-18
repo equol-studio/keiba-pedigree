@@ -1,0 +1,21 @@
+{
+ "updated": "2026-07-18T14:47:03.851Z",
+ "meetings": [
+  {
+   "date": "20260718",
+   "has": [
+    "pedigree-data.js",
+    "odds-data.js",
+    "result.js"
+   ]
+  },
+  {
+   "date": "20260712",
+   "has": [
+    "pedigree-data.js",
+    "odds-data.js",
+    "result.js"
+   ]
+  }
+ ]
+}

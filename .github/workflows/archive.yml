@@ -1,0 +1,48 @@
+name: archive-meeting
+# 開催日の夜に その日のデータ一式(血統/オッズ/結果)を data/YYYYMMDD/ へ保存。
+# ★翌日の blood.yml(JST 07:00 = UTC 22:00)に pedigree-data.js を上書きされる前に走らせること。
+on:
+  schedule:
+    - cron: '0 12 * * 6,0'   # UTC 土/日 12:00 = JST 土/日 21:00（本命：最終レース確定後）
+    - cron: '0 14 * * 6,0'   # UTC 土/日 14:00 = JST 土/日 23:00（cron遅延/不発の保険）
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'YYYYMMDD（空欄=いまの pedigree-data.js の日付）'
+        required: false
+concurrency:
+  group: archive-meeting
+  cancel-in-progress: false
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Archive meeting data
+        run: |
+          DATE="${{ github.event.inputs.date }}"
+          # 保険cronが重なっても二重に走らせない：既に結果まで保存済みならスキップ
+          if [ -z "$DATE" ]; then DATE=$(TZ=Asia/Tokyo date +%Y%m%d); fi
+          if [ -f "data/$DATE/result.js" ]; then
+            echo "already archived $DATE — skip"; exit 0
+          fi
+          node scrape/archive.mjs "$DATE"
+      - name: Commit if changed
+        run: |
+          git config user.name "archive-bot"
+          git config user.email "archive-bot@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "no change"
+          else
+            DATE="${{ github.event.inputs.date }}"
+            if [ -z "$DATE" ]; then DATE=$(TZ=Asia/Tokyo date +%Y%m%d); fi
+            git commit -m "archive $DATE [skip ci]"
+            git pull --rebase origin master || true
+            git push origin master
+          fi
