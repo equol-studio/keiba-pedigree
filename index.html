@@ -131,6 +131,13 @@
   .rb-r{font-size:19px;font-weight:800;letter-spacing:.02em;font-family:var(--num)}
   .rb-course{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rb-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+  /* レース番号グリッド：全Rへ1タップで飛べる（矢印だけだと11Rが遠い） */
+  .rgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin:-4px 0 10px}
+  .rgrid button{padding:0;height:38px;border-radius:9px;font-size:13px;font-weight:700;
+    background:var(--panel);border:1px solid var(--line);color:var(--sub);font-family:var(--num)}
+  .rgrid button.on{background:var(--accent);border-color:var(--accent);color:#06263f}
+  .rgrid button.done{opacity:.55}
+  .rgrid button.done.on{opacity:1}
   .chip{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(255,255,255,.06);
     color:var(--sub);border:1px solid var(--line);white-space:nowrap}
   .chip.wet{background:rgba(108,192,255,.14);color:var(--accent);border-color:rgba(108,192,255,.35)}
@@ -296,6 +303,7 @@
         </div>
         <button class="rb-nav" id="rbNext" aria-label="次のレース">›</button>
       </div>
+      <div class="rgrid" id="rbGrid"></div>
       <select id="raceSel" hidden></select>
 
       <!-- 1画面ダッシュボード：判定→要点3カード→買い目/配分の要約 -->
@@ -1570,6 +1578,18 @@ function renderRaceBar(race, oddsRace, liveGoing, assumed, realGoing, goingEst){
   const p=document.getElementById('rbPrev'), n=document.getElementById('rbNext');
   if(p){ p.disabled=idx<=0; p.onclick=()=>{ sel.value=String(Math.max(0,idx-1)); drawRace(); }; }
   if(n){ n.disabled=idx>=last; n.onclick=()=>{ sel.value=String(Math.min(last,idx+1)); drawRace(); }; }
+  /* 全レースへ1タップ。矢印は隣接移動用に残す */
+  const grid=document.getElementById('rbGrid');
+  if(grid){
+    if(grid.childElementCount!==data.races.length){
+      grid.innerHTML=data.races.map((r,i)=>`<button data-i="${i}">${r.no}</button>`).join('');
+      grid.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+        sel.value=b.dataset.i; drawRace();
+        document.getElementById('raceCard').scrollIntoView({block:'start',behavior:'smooth'});
+      }));
+    }
+    grid.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===idx));
+  }
 }
 function renderDash(hs, oddsRace, rec){
   const vEl=document.getElementById('raceVerdict'), dEl=document.getElementById('raceDash');
