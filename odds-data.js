@@ -1,1 +1,1 @@
-window.KEIBA_ODDS={"fetchedAt":"2026-07-19T15:53:14.577Z","date":"20260719","currentGoing":"","currentGoingTurf":"","currentGoingDirt":"","races":{}};
+window.KEIBA_ODDS={"fetchedAt":"2026-07-19T16:03:16.509Z","date":"20260719","currentGoing":"","currentGoingTurf":"","currentGoingDirt":"","races":{}};
