@@ -7,6 +7,13 @@ import { fileURLToPath } from 'node:url';
 
 const UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* 競馬場コード。TRACK env か --track= で切替（既定=函館）。 */
+const TRACKS={'01':'札幌','02':'函館','03':'福島','04':'新潟','05':'東京','06':'中山','07':'中京','08':'京都','09':'阪神','10':'小倉'};
+function trackCode(x){ if(!x) return '02'; if(TRACKS[x]) return x; const h=Object.entries(TRACKS).find(([,n])=>n===x); return h?h[0]:'02'; }
+const _ta=(process.argv.find(a=>a.startsWith('--track='))||'').split('=')[1];
+const TRACK=trackCode(_ta||process.env.TRACK||'函館');
+const TRACK_NAME=TRACKS[TRACK];
 const strip=s=>s.replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
 
 async function get(url){
@@ -20,7 +27,7 @@ async function get(url){
 async function raceIdsForDate(date){
   const t=await get(`https://race.netkeiba.com/top/race_list_sub.html?kaisai_date=${date}`);
   const ids=[...new Set([...t.matchAll(/race_id=(\d{12})/g)].map(m=>m[1]))];
-  return ids.filter(id=>id.slice(4,6)==='02').sort();   // 02=函館
+  return ids.filter(id=>id.slice(4,6)===TRACK).sort();   // 02=函館
 }
 
 // 数字列の取り出し（"2 6 3" / "2 / 6" どちらも拾う）
@@ -97,7 +104,7 @@ async function main(){
     console.error(`ABORT: only ${done}/${ids.length} races had results — not writing`);
     process.exit(1);
   }
-  const data={fetchedAt:new Date().toISOString(), date, track:'函館', races};
+  const data={fetchedAt:new Date().toISOString(), date, track:TRACK_NAME, races};
   writeFileSync(out, 'window.KEIBA_RESULT='+JSON.stringify(data)+';\n', 'utf8');
   console.error(`WROTE ${out} races=${done}/${ids.length}`);
 }

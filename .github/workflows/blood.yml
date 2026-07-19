@@ -10,6 +10,10 @@ on:
       date:
         description: 'YYYYMMDD（空欄=今日JST）'
         required: false
+      track:
+        description: '競馬場（札幌/函館/新潟/中京/福島 等・空欄=札幌）'
+        required: false
+        default: '札幌'
 # 同時実行を直列化（保険cronが重なっても二重スクレイプしない）
 concurrency:
   group: build-race
@@ -33,7 +37,9 @@ jobs:
           if [ -z "${{ github.event.inputs.date }}" ] && grep -q "\"date\":\"$DATE\"" pedigree-data.js 2>/dev/null; then
             echo "already built for $DATE — skip scrape"; exit 0
           fi
-          node scrape/build-hakodate.mjs "$DATE"
+          TRACK="${{ github.event.inputs.track }}"
+          if [ -z "$TRACK" ]; then TRACK=札幌; fi
+          TRACK="$TRACK" node scrape/build-hakodate.mjs "$DATE"
       - name: Commit if changed
         run: |
           git config user.name "race-bot"

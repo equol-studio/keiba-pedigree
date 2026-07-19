@@ -50,17 +50,30 @@ function horseName(txt){
   return h1s[0]||'';
 }
 
+/* 競馬場コード（netkeibaのrace_id 5-6桁目）。TRACK環境変数か第4引数で切替。 */
+export const TRACKS={'01':'札幌','02':'函館','03':'福島','04':'新潟','05':'東京','06':'中山','07':'中京','08':'京都','09':'阪神','10':'小倉'};
+export function trackCode(nameOrCode){
+  if(!nameOrCode) return '02';
+  if(TRACKS[nameOrCode]) return nameOrCode;
+  const hit=Object.entries(TRACKS).find(([,n])=>n===nameOrCode);
+  return hit?hit[0]:'02';
+}
+/* 位置引数は従来どおり（YYYYMMDD maxRaces outPath）。競馬場は TRACK env か --track= で指定。 */
+const trackArg=(process.argv.find(a=>a.startsWith('--track='))||'').split('=')[1];
+const TRACK=trackCode(trackArg||process.env.TRACK||'函館');
+const TRACK_NAME=TRACKS[TRACK];
+
 async function raceIdsForDate(date){
   const t=await get(`https://race.netkeiba.com/top/race_list_sub.html?kaisai_date=${date}`);
   const ids=[...new Set([...t.matchAll(/race_id=(\d{12})/g)].map(m=>m[1]))];
-  return ids.filter(id=>id.slice(4,6)==='02').sort(); // 02=函館
+  return ids.filter(id=>id.slice(4,6)===TRACK).sort();
 }
 async function parseRace(raceId){
   const t=await get(`https://race.netkeiba.com/race/shutuba.html?race_id=${raceId}`);
   const rd=(t.match(/<div class="RaceData01"[^>]*>([\s\S]*?)<\/div>/)||[])[1]||'';
   const sd=rd.match(/(芝|ダ|障)\s*(\d{3,4})m/);
   const surface=sd?sd[1]:''; const dist=sd?sd[2]:'';
-  const course=surface?`函館${surface==='ダ'?'ダ':surface}${dist}`:'函館';
+  const course=surface?`${TRACK_NAME}${surface==='ダ'?'ダ':surface}${dist}`:TRACK_NAME;
   let going=((rd.replace(/<[^>]+>/g,' ').match(/馬場[:：]\s*(不良|稍\s*重|良好|良|重|不|稍)/)||[])[1]||'').replace(/\s/g,'');
   going=({'不':'不良','稍':'稍重','良好':'良'})[going]||going;
   const rn=(t.match(/<div class="RaceName"[^>]*>([\s\S]*?)<\/div>/)||[])[1];
@@ -139,7 +152,7 @@ function parseRecord(txt){
     else if(baba==='稍') add(rec.yaya,chaku);
     if(surface==='芝') add(rec.turf,chaku); else if(surface==='ダ') add(rec.dirt,chaku);
     if(venue) add(DIR_LEFT.includes(venue)?rec.left:rec.right,chaku);
-    if(venue==='函館') add(rec.hako,chaku);
+    if(venue===TRACK_NAME) add(rec.hako,chaku);
     if(!rec.dist[dist]) rec.dist[dist]=agg();
     add(rec.dist[dist],chaku);
   }
@@ -165,12 +178,16 @@ async function getJockeyStats(jid, year){
     winP:pct(pick[9]), renP:pct(pick[10]), fukuP:pct(pick[11]) };
 }
 
-// パンダズ競馬 函館 → 種牡馬×コース×複勝回収率 を自動収集
+// パンダズ競馬（競馬場別ページ）→ 種牡馬×コース×複勝回収率 を自動収集
+const PANDAS_SLUG={'01':'sapporo','02':'hakodate','03':'fukushima','04':'niigata','05':'tokyo','06':'nakayama','07':'chukyo','08':'kyoto','09':'hanshin','10':'kokura'};
 async function scrapePandas(){
-  const t=await get('https://db-keiba.com/hakodate-stallion/');
+  const slug=PANDAS_SLUG[TRACK];
+  if(!slug){ console.error(`パンダズ: ${TRACK_NAME}のページ未対応`); return []; }
+  const t=await get(`https://db-keiba.com/${slug}-stallion/`);
   const heads=[...t.matchAll(/<h[23][^>]*>([\s\S]*?)<\/h[23]>/g)].map(m=>m[1].replace(/<[^>]+>/g,'').trim());
-  const courses=heads.filter(h=>/函館(芝|ダート)\d/.test(h)).map(h=>{
-    const m=h.match(/函館(芝|ダート)(\d{3,4})/); return `函館${m[1]==='ダート'?'ダ':'芝'}${m[2]}`;
+  const re=new RegExp(`${TRACK_NAME}(芝|ダート)(\\d{3,4})`);
+  const courses=heads.filter(h=>re.test(h)).map(h=>{
+    const m=h.match(re); return `${TRACK_NAME}${m[1]==='ダート'?'ダ':'芝'}${m[2]}`;
   });
   const tables=t.split('<table').slice(1).map(x=>'<table'+x.split('</table>')[0]);
   const recs=[];
@@ -194,7 +211,7 @@ async function main(){
   if(!date){ console.error('usage: node build-hakodate.mjs YYYYMMDD [maxRaces] [outPath]'); process.exit(1); }
   console.error('date',date);
   let ids=await raceIdsForDate(date);
-  console.error('函館 race_ids:',ids.length);
+  console.error(TRACK_NAME+' race_ids:',ids.length);
   ids=ids.slice(0,maxRaces);
   const pedCache={};
   const jockeyCache={};
@@ -243,7 +260,7 @@ async function main(){
     console.error(`ERROR: 馬番未確定 ${nullU}/${totU}頭（枠順確定前？）— pedigree-data.js を更新せず終了`);
     process.exit(1);
   }
-  const data={generatedAt:new Date().toISOString(), date, track:'函館', races};
+  const data={generatedAt:new Date().toISOString(), date, track:TRACK_NAME, races};
   writeFileSync(out, 'window.KEIBA_PED='+JSON.stringify(data)+';\n', 'utf8');
   console.error('WROTE',out,'races',races.length);
 

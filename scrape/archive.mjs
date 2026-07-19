@@ -54,7 +54,10 @@ const resPath = p('data', date, 'result.js');
 if(existsSync(resPath)){
   saved.push('result.js(既存)');
 } else {
-  const r = spawnSync(process.execPath, [p('scrape','fetch-results.mjs'), date, resPath], {stdio:'inherit'});
+  /* 結果は「その日の血統データと同じ競馬場」で取る（開催場が週替わりのため） */
+  const track = (()=>{ try{ return loadWindowFile(p('data',date,'pedigree-data.js')).KEIBA_PED?.track || ''; }catch{ return ''; } })();
+  const r = spawnSync(process.execPath,
+    [p('scrape','fetch-results.mjs'), date, resPath, ...(track?[`--track=${track}`]:[])], {stdio:'inherit'});
   if(r.status === 0) saved.push('result.js');
   else skipped.push('result.js(取得失敗＝未確定?)');
 }

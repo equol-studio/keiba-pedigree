@@ -7,6 +7,10 @@ on:
         description: 'ループ継続分数（最大330）'
         required: false
         default: '330'
+      track:
+        description: '競馬場（空欄=札幌）'
+        required: false
+        default: '札幌'
   schedule:
     - cron: '2 1 * * 6,0'    # UTC 土日01:02 = JST 10:02（本命）
     - cron: '32 1 * * 6,0'   # UTC 土日01:32 = JST 10:32（cron遅延/不発の保険）
@@ -35,7 +39,8 @@ jobs:
           DATE=$(TZ=Asia/Tokyo date +%Y%m%d 2>/dev/null || date -u +%Y%m%d)
           echo "loop date=$DATE for ${MINS}min"
           while [ "$(date +%s)" -lt "$END" ]; do
-            node scrape/fetch-odds.mjs "$DATE" || true
+            TRACK="${{ github.event.inputs.track }}"; [ -z "$TRACK" ] && TRACK=札幌
+            TRACK="$TRACK" node scrape/fetch-odds.mjs "$DATE" || true
             git add odds-data.js
             if ! git diff --cached --quiet; then
               git pull --rebase --autostash origin master >/dev/null 2>&1 || true

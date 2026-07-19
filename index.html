@@ -138,6 +138,27 @@
   .rgrid button.on{background:var(--accent);border-color:var(--accent);color:#06263f}
   .rgrid button.done{opacity:.55}
   .rgrid button.done.on{opacity:1}
+  /* 自分の印（アプリ評価とは別トラック） */
+  .mymk{width:34px;text-align:center;padding:0!important}
+  .mymk button{width:32px;height:32px;padding:0;border-radius:8px;font-size:15px;font-weight:800;
+    background:var(--panel2);border:1px dashed var(--line);color:var(--sub);line-height:1}
+  .mymk button.set{border-style:solid;background:rgba(255,209,102,.16);border-color:var(--accent2);color:var(--accent2)}
+  tr.mine>td{background:rgba(255,209,102,.06)}
+  .mkpick{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;
+    background:rgba(0,0,0,.55);backdrop-filter:blur(2px)}
+  .mkpick[hidden]{display:none}
+  .mkpick-in{background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 0 0;
+    width:100%;max-width:520px;padding:14px 14px calc(18px + env(safe-area-inset-bottom))}
+  .mkpick h3{margin:0 0 4px;font-size:15px}
+  .mkpick .who{font-size:12px;color:var(--sub);margin-bottom:12px}
+  .mkrow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .mkrow button{height:52px;font-size:20px;font-weight:800;border-radius:11px;
+    background:var(--panel2);border:1px solid var(--line);color:var(--txt)}
+  .mkrow button.clear{font-size:13px;font-weight:700;color:var(--sub)}
+  .myline{display:flex;gap:7px;align-items:flex-start;font-size:12px;padding:7px 10px;
+    background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.3);border-radius:var(--r-sm);
+    margin-bottom:7px;line-height:1.5}
+  .myline .k{flex:0 0 auto;font-size:10px;font-weight:800;color:var(--accent2);padding-top:2px}
   .chip{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(255,255,255,.06);
     color:var(--sub);border:1px solid var(--line);white-space:nowrap}
   .chip.wet{background:rgba(108,192,255,.14);color:var(--accent);border-color:rgba(108,192,255,.35)}
@@ -354,9 +375,21 @@
       </details>
 
       <span class="seed" id="raceMeta" hidden></span>
+      <!-- 自分の印を選ぶシート -->
+      <div class="mkpick" id="mkPick" hidden>
+        <div class="mkpick-in">
+          <h3>自分の印をつける</h3>
+          <div class="who" id="mkWho"></div>
+          <div class="mkrow">
+            <button data-m="◎">◎</button><button data-m="○">○</button><button data-m="▲">▲</button>
+            <button data-m="△">△</button><button data-m="✕">✕</button>
+            <button data-m="" class="clear">消す</button>
+          </div>
+        </div>
+      </div>
       <p class="muted" style="margin:8px 0 0">行タップで父系ラインを展開、「読込」で5代クロス診断へ。データ更新は <code>scrape/build-hakodate.mjs</code>。</p>
     </div>
-    <p class="muted" id="raceEmpty" style="text-align:center;padding:24px" hidden>レースデータ未取得です。<code>node scrape/build-hakodate.mjs YYYYMMDD</code> を実行すると函館全レースがここに並びます。</p>
+    <p class="muted" id="raceEmpty" style="text-align:center;padding:24px" hidden>レースデータ未取得です。<code>TRACK=札幌 node scrape/build-hakodate.mjs YYYYMMDD</code> を実行すると開催全レースがここに並びます。</p>
   </section>
 
   <!-- ===== 血統表 ===== -->
@@ -633,20 +666,36 @@ const SYS_EVAL={
   nasrullah:'スピードと気性の強さ。マイル前後の先行力',
   native:'スピード＋パワー。短距離・ダートの快速'
 };
-/* 函館(洋芝・小回り)巧者タグ＝得意競馬場 */
-const HAKODATE_VENUE={
-  ハービンジャー:'洋芝◎・函館巧者',エイシンフラッシュ:'洋芝・小回り◎',モーリス:'函館芝◎',
-  キズナ:'函館◎(芝ダ)',ゴールドシップ:'洋芝・タフ◎',オルフェーヴル:'洋芝・道悪◎',
-  ステイゴールド:'洋芝・タフ◎',ロードカナロア:'函館芝短◎',ブラックタイド:'函館ダ◎',
-  ドレフォン:'函館ダ◎',ハーツクライ:'洋芝○',ルーラーシップ:'洋芝○'
+/* 開催中の競馬場（pedigree-data.js の track）。データ未読込時は函館を既定に。 */
+function curTrack(){ return (window.KEIBA_PED&&window.KEIBA_PED.track)||'函館'; }
+/* 洋芝(函館・札幌)か＝亀谷のブラッドバイアスを効かせる条件 */
+function isYoshiba(track){ return /函館|札幌/.test(track||curTrack()); }
+
+/* 競馬場別の巧者タグ（定説）。洋芝場は共通の洋芝タグ＋場ごとの補足。
+   ※亀谷は「函館と札幌で狙う血統は異なる」と指摘（札幌は直線が長くゆったり＝持続力寄り、
+     函館は小回り・急坂なしでパワーと立ち回り）。まずは洋芝共通＋既知の場別タグで運用する。 */
+const VENUE_TAGS={
+  '函館':{
+    ハービンジャー:'洋芝◎・函館巧者',エイシンフラッシュ:'洋芝・小回り◎',モーリス:'函館芝◎',
+    キズナ:'函館◎(芝ダ)',ゴールドシップ:'洋芝・タフ◎',オルフェーヴル:'洋芝・道悪◎',
+    ステイゴールド:'洋芝・タフ◎',ロードカナロア:'函館芝短◎',ブラックタイド:'函館ダ◎',
+    ドレフォン:'函館ダ◎',ハーツクライ:'洋芝○',ルーラーシップ:'洋芝○'
+  },
+  '札幌':{
+    ハービンジャー:'洋芝◎・持続力',ゴールドシップ:'洋芝・タフ◎',オルフェーヴル:'洋芝・道悪◎',
+    ステイゴールド:'洋芝・タフ◎',ハーツクライ:'洋芝○・持続◎',ルーラーシップ:'洋芝○',
+    モーリス:'洋芝○',キズナ:'洋芝○(芝ダ)',ドゥラメンテ:'札幌芝○',ドレフォン:'札幌ダ○'
+  }
 };
 function venueNote(sire,fApt,v){
-  const known=HAKODATE_VENUE[sire]||HAKODATE_VENUE[norm(sire)];
-  const hakoEv=evidence.filter(r=>norm(r.sire)===norm(sire)&&/函館/.test(r.course)&&r.fuku);
+  const tk=curTrack();
+  const tags=VENUE_TAGS[tk]||{};
+  const known=tags[sire]||tags[norm(sire)];
+  const tkEv=evidence.filter(r=>norm(r.sire)===norm(sire)&&r.course&&r.course.indexOf(tk)===0&&r.fuku);
   const parts=[];
   if(known) parts.push('🏔'+known+'(定説)');
-  if(hakoEv.length){ const best=Math.max(...hakoEv.map(r=>+r.fuku||0)); parts.push(`函館実績: 複勝回収 最高${best}%（${hakoEv.length}コース）`); }
-  return parts.join(' ／ ')||'函館の特記データなし';
+  if(tkEv.length){ const best=Math.max(...tkEv.map(r=>+r.fuku||0)); parts.push(`${tk}実績: 複勝回収 最高${best}%（${tkEv.length}コース）`); }
+  return parts.join(' ／ ')||`${tk}の特記データなし`;
 }
 
 /* ---- 亀谷式 国系統（日本型/米国型/欧州型） ---- */
@@ -1345,7 +1394,11 @@ function distFit(apt,dist){
 /* 枠順適性：函館コースの枠バイアス（定説）＋馬の枠位置 */
 const WAKU_BIAS={
   '函館芝1200':'内枠有利（小回り・先行）','函館芝1800':'内枠やや有利','函館芝2000':'ほぼフラット',
-  '函館芝2600':'ほぼフラット','函館ダ1000':'外枠有利（ダッシュ）','函館ダ1700':'内〜中枠有利'
+  '函館芝2600':'ほぼフラット','函館ダ1000':'外枠有利（ダッシュ）','函館ダ1700':'内〜中枠有利',
+  /* 札幌＝洋芝だが函館より直線が長くコーナーが緩い＝枠の影響は函館より小さい（定説） */
+  '札幌芝1200':'内枠やや有利','札幌芝1500':'外枠不利気味（ポケット発走）','札幌芝1800':'ほぼフラット',
+  '札幌芝2000':'ほぼフラット','札幌芝2600':'ほぼフラット',
+  '札幌ダ1000':'外枠有利（ダッシュ）','札幌ダ1700':'内〜中枠有利'
 };
 function wakuPos(waku){ if(!waku)return ''; return waku<=3?'内':waku<=5?'中':'外'; }
 /* 前走ローテ・前走内容 */
@@ -1435,7 +1488,7 @@ function evaluateHorse(h,race){
     const sfc=race.surface==='ダ'?rec.dirt:rec.turf;
     if(sfc){ if(sfc.n>=3 && sfc.p/sfc.n>=0.4){ score+=10; }
       else if(sfc.n>=4 && sfc.p===0){ score-=12; basis+=`／${race.surface}実績なし(0/${sfc.n})`; } }
-    if(rec.hako.n>=2 && rec.hako.p/rec.hako.n>=0.5){ score+=15; basis+=`／函館巧者(${rec.hako.p}/${rec.hako.n})`; }
+    if(rec.hako.n>=2 && rec.hako.p/rec.hako.n>=0.5){ score+=15; basis+=`／${curTrack()}巧者(${rec.hako.p}/${rec.hako.n})`; }
   }
   // 血統シグナル（道悪血統/バイアス/ローテ）＝実績を補う小さめのnudge。血統ミスマッチ(－)には血統加点しない
   if(wet && mark!=='－'){
@@ -1457,8 +1510,10 @@ function evaluateHorse(h,race){
   const subsys=subSysOf(h.sire,fsys);
   let bias=0, biasNote='';
   if(mark!=='－'){
-    if(race.surface==='芝'){
-      if(nation==='欧'){ bias=12; biasNote='洋芝×欧州型◎（パワー要る函館芝）'; }
+    /* 芝の加点は洋芝(函館・札幌)限定。野芝の新潟・福島等で同じ加点をすると誤り。 */
+    if(race.surface==='芝' && isYoshiba()){
+      const tk=curTrack();
+      if(nation==='欧'){ bias=12; biasNote=`洋芝×欧州型◎（パワー要る${tk}芝）`; }
       else if(subsys==='tsun'){ bias=8; biasNote='洋芝×Tサンデー系○（欧州的スタミナ）'; }
       else if(fsys==='nasrullah'){ bias=8; biasNote='洋芝×ナスルーラ系○（洋芝巧者）'; }
       else if(nation==='米'){ bias=-4; biasNote='洋芝×米国型△（軽いスピードは割引）'; }
@@ -1530,7 +1585,7 @@ function buyFactors(v,race,rec,js){
   else if(v.fit==='misfit') c.push('<span class="fc no">🎯コース✕推</span>');
   // ↩ 右回り（函館=右）／函館実績
   if(rec){
-    if(rec.hako.n>0){ const ht=recTier(rec.hako); c.push(`<span class="fc ${ht.t}">🏔函館${ht.s}${recTxt(rec.hako)}</span>`); }
+    if(rec.hako.n>0){ const ht=recTier(rec.hako); c.push(`<span class="fc ${ht.t}">🏔${curTrack()}${ht.s}${recTxt(rec.hako)}</span>`); }
     if(rec.right.n>0){ const rt2=recTier(rec.right,3); c.push(`<span class="fc ${rt2.t==='go'?'go':rt2.t==='no'?'no':'dim'}">↩右${recTxt(rec.right)}</span>`); }
     else if(rec.left.n>0) c.push('<span class="fc dim">↩右初(左のみ)</span>');
   }else{
@@ -1551,6 +1606,42 @@ function showTab(name){
   window.scrollTo({top:0});
 }
 document.querySelectorAll('#tabs .tab').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+
+/* ---- 自分の印（アプリの自動評価とは別トラックで保存） ----
+   キー: pedMyMarks → { "<raceId>": { "<馬番>": "◎" } }
+   アプリの印(◎○▲△)を上書きせず併記する。後で「自分の印 vs アプリの印」を検証できるようにするため。 */
+const MYMARK_KEY='pedMyMarks';
+function myMarksAll(){
+  try{ return JSON.parse(localStorage.getItem(MYMARK_KEY)||'{}')||{}; }catch(e){ return {}; }
+}
+function myMarks(raceId){ return myMarksAll()[raceId]||{}; }
+function setMyMark(raceId, umaban, mark){
+  const all=myMarksAll();
+  if(!all[raceId]) all[raceId]={};
+  if(mark) all[raceId][umaban]=mark; else delete all[raceId][umaban];
+  if(!Object.keys(all[raceId]).length) delete all[raceId];
+  try{ localStorage.setItem(MYMARK_KEY, JSON.stringify(all)); }catch(e){}
+}
+const MYMARK_ORDER=['◎','○','▲','△','✕'];
+/* 印シートを開く（対象馬を渡す） */
+function openMarkPicker(raceId, umaban, name){
+  const el=document.getElementById('mkPick'); if(!el) return;
+  document.getElementById('mkWho').textContent=`${umaban} ${name||''}`;
+  el.hidden=false;
+  el.querySelectorAll('.mkrow button').forEach(b=>{
+    b.onclick=()=>{ setMyMark(raceId, umaban, b.dataset.m); el.hidden=true; drawRace(); };
+  });
+  el.onclick=e=>{ if(e.target===el) el.hidden=true; };
+}
+/* 自分の印のまとめ行（ダッシュボードに出す） */
+function renderMyLine(race){
+  const m=myMarks(race.raceId);
+  const ums=Object.keys(m).sort((a,b)=>MYMARK_ORDER.indexOf(m[a])-MYMARK_ORDER.indexOf(m[b])||a-b);
+  if(!ums.length) return '';
+  const byName={}; race.horses.forEach(h=>byName[h.umaban]=h.name);
+  return `<div class="myline"><span class="k">自分</span><span class="v">`+
+    ums.map(u=>`<b>${m[u]}</b>${u} ${byName[u]||''}`).join(' ／ ')+`</span></div>`;
+}
 
 /* ---- v39 ダッシュボード：レースバー／要点3カード／要約行 ---- */
 function renderRaceBar(race, oddsRace, liveGoing, assumed, realGoing, goingEst){
@@ -1644,6 +1735,16 @@ function renderSummary(hs, oddsRace, rec){
   }
   el.innerHTML=lines.join('');
 }
+/* 自分の印の行をダッシュボードに差し込む（要約行の直前） */
+function renderMine(race){
+  let el=document.getElementById('raceMine');
+  if(!el){
+    el=document.createElement('div'); el.id='raceMine';
+    const sum=document.getElementById('raceSummary');
+    if(sum&&sum.parentNode) sum.parentNode.insertBefore(el, sum);
+  }
+  el.innerHTML=renderMyLine(race);
+}
 
 function renderRaceView(){
   const data=window.KEIBA_PED;
@@ -1721,9 +1822,11 @@ function drawRace(){
     renderSummary(sorted, oddsRace, rec);
   }
   renderRaceBar(race, oddsRace, liveGoing, assumed, realGoing, goingEst);
+  renderMine(race);
   const cntEl=document.getElementById('foldHorsesCnt');
   if(cntEl) cntEl.textContent=horses.length+'頭';
-  let html='<tr><th class="mk">印</th><th class="uma">馬番</th><th>馬名 / 父系・国系統</th><th class="roi">複勝回収</th><th></th></tr>';
+  const mine=myMarks(race.raceId);
+  let html='<tr><th class="mk">印</th><th class="mymk">自分</th><th class="uma">馬番</th><th>馬名 / 父系・国系統</th><th class="roi">複勝回収</th><th></th></tr>';
   horses.forEach(({h,v})=>{
     const mkCls=MARK_CLS[v.mark]||'roi-lo';
     const fTag=v.fsys?SYS_LABEL[v.fsys]:'系統?';
@@ -1738,8 +1841,10 @@ function drawRace(){
     const roiTxt=(v.roi!=null
       ? `<b class="${roiCls}">${v.isFuku?'複':'単'}${v.roi}<span class="u">%</span></b><div class="sub">${v.who}血統</div>`
       : `<span class="u">— <span class="sub">${v.mark==='☆'?'血統○':v.mark==='－'?'不適':'データ無'}</span></span>`)+myakuTag+oddsTxt;
-    html+=`<tr class="main ${v.mark==='◎'||v.mark==='○'?'rv-buy':''}" data-uma="${h.umaban}">
+    const my=mine[h.umaban]||'';
+    html+=`<tr class="main ${v.mark==='◎'||v.mark==='○'?'rv-buy':''} ${my?'mine':''}" data-uma="${h.umaban}">
       <td class="mk ${mkCls}">${v.mark}</td>
+      <td class="mymk"><button class="mymk-btn ${my?'set':''}" data-uma="${h.umaban}" data-name="${(h.name||'').replace(/"/g,'')}">${my||'＋'}</button></td>
       <td class="uma">${h.umaban?`<span class="wb wk${h.waku||0}">${h.umaban}</span>`:''}</td>
       <td><div class="hn">${h.name||'?'} ${nBadge} ${biasFlag} ${roteFlag} ${vFlag?`<span class="val-hot">${vFlag}</span>`:''}</div><div class="sub">父 ${h.sire||'?'}〔${fTag}〕／母父 ${h.bms||'?'}</div>${buyFactors(v,race,h.rec,h.jstats)}</td>
       <td class="roi">${roiTxt}</td>
@@ -1748,9 +1853,14 @@ function drawRace(){
   });
   const t=document.getElementById('raceView');
   t.innerHTML=html;
+  // 自分の印ボタン
+  t.querySelectorAll('.mymk-btn').forEach(b=>b.addEventListener('click',e=>{
+    e.stopPropagation();
+    openMarkPicker(race.raceId, +b.dataset.uma, b.dataset.name);
+  }));
   // 行タップで父系ライン等を展開
   t.querySelectorAll('tr.main').forEach(tr=>tr.addEventListener('click',e=>{
-    if(e.target.classList.contains('load')) return;
+    if(e.target.classList.contains('load')||e.target.classList.contains('mymk-btn')) return;
     const uma=tr.dataset.uma;
     const nx=tr.nextElementSibling;
     if(nx&&nx.classList.contains('rv-detail')){ nx.remove(); return; }
