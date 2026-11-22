@@ -1,1 +1,1 @@
-window.KEIBA_PED={"generatedAt":"2026-11-21T02:56:41.576Z","date":"20261121","track":"札幌","races":[]};
+window.KEIBA_PED={"generatedAt":"2026-11-22T01:51:00.700Z","date":"20261122","track":"札幌","races":[]};
